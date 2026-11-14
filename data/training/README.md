@@ -40,3 +40,17 @@ $env:PYTHONPATH = 'pipeline/src'
 ```
 
 The command writes `raw/source-checksums.json` and, for model run `2026-11-14-mvp-v1`, `processed/2026-11-14-mvp-v1/location-features.json` plus `processing-report.json`. These artifacts are generated from locally downloaded source rasters, remain ignored by Git, and report terrain metrics only. They are not analog-site approval, rover-safety assessment, or mission-planning output.
+
+## Local-population ranking package
+
+After generating the display profiles, build the source-backed ranking package with:
+
+```powershell
+$py = 'C:\Users\Lesharo Bladen S\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
+$env:PYTHONPATH = 'pipeline/src'
+& $py -m terra_analog.run_rankings --training-root data/training
+```
+
+The runner derives 3 km study profiles at a fixed 5×5 offset grid (`-8`, `-4`, `0`, `4`, and `8` km east and north): 25 profiles around Gale and 25 around each Earth candidate. It fits separate Mars and Earth ECDF mid-rank transforms for slope, terrain roughness, and relative relief. The fixed similarity weights are 0.35, 0.35, and 0.30 respectively; an invalid feature is excluded and the remaining weights are renormalised.
+
+The ignored model-run folder then contains `study-population-features.json`, `model_manifest.json`, enriched `location-features.json`, `rankings.json`, `ranking-contributions.json`, `location-evidence.json`, `candidates.geojson`, and `validation-report.json`. The GeoJSON is a six-point FeatureCollection: one Mars Gale reference point and five Earth candidate points. Candidate properties add rank, score, coverage, source IDs, and strongest-match/largest-mismatch feature keys; the Gale reference has no candidate rank or score. The manifest retains sorted transformation values, source IDs, sample counts, run ID, and transformation version. Rankings are a data-derived terrain comparison within the declared local populations, not global discovery, field approval, rover-safety assessment, or mission-site approval.

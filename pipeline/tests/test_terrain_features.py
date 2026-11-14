@@ -3,12 +3,50 @@ from pathlib import Path
 
 import numpy as np
 
-from terra_analog.run_training_features import build_location_features
+from terra_analog.run_training_features import (
+    build_location_feature_records,
+    build_location_features,
+    offset_location,
+)
 from terra_analog.source_rasters import NasademCatalog
 from terra_analog.terrain_features import derive_feature_summary
 
 
 class TerrainFeatureTests(unittest.TestCase):
+    def test_offset_location_moves_a_copy_of_an_earth_location(self):
+        original = {
+            "id": "test-earth",
+            "body": "earth",
+            "center": {"latitude": 0.0, "longitude": 0.0},
+            "datasetIds": ["earth-nasadem-hgt-v001"],
+        }
+
+        shifted = offset_location(original, east_km=4.0, north_km=-4.0)
+
+        self.assertEqual(original["center"], {"latitude": 0.0, "longitude": 0.0})
+        self.assertLess(shifted["center"]["latitude"], 0.0)
+        self.assertGreater(shifted["center"]["longitude"], 0.0)
+
+    def test_reusable_profile_builder_keeps_feature_provenance_at_study_radius(self):
+        class PlanarSampler:
+            def sample(self, latitude, longitude):
+                return latitude * 10_000 + longitude * 10_000
+
+        location = {
+            "id": "test-earth",
+            "body": "earth",
+            "center": {"latitude": 0.0, "longitude": 0.0},
+            "datasetIds": ["earth-nasadem-hgt-v001"],
+        }
+
+        records = build_location_feature_records(location, PlanarSampler(), radius_m=3_000)
+
+        self.assertEqual({record["featureKey"] for record in records}, {
+            "median_slope_deg", "terrain_roughness_m", "relative_relief_m"
+        })
+        self.assertTrue(all(record["sourceDatasetId"] == "earth-nasadem-hgt-v001" for record in records))
+        self.assertTrue(all(record["unit"] for record in records))
+        self.assertTrue(all(record["qualityFlag"] for record in records))
     def test_planar_surface_has_expected_slope_and_local_elevation_spread(self):
         _, x = np.mgrid[0:15, 0:15]
 
