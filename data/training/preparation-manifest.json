@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "modelRunId": "2026-11-14-mvp-v1",
+  "rawRoot": "data/training/raw",
+  "interimRoot": "data/training/interim",
+  "outputRoot": "data/training/processed/2026-11-14-mvp-v1",
+  "downloadState": "not-downloaded",
+  "features": [
+    {
+      "key": "median_slope_deg",
+      "unit": "degrees",
+      "formula": "median of slope derived from the clipped DEM",
+      "localWindowKm": 3
+    },
+    {
+      "key": "terrain_roughness_m",
+      "unit": "m",
+      "formula": "standard deviation of elevation in a 3 km local window",
+      "localWindowKm": 3
+    },
+    {
+      "key": "relative_relief_m",
+      "unit": "m",
+      "formula": "local maximum elevation minus local minimum elevation in a 3 km window",
+      "localWindowKm": 3
+    }
+  ],
+  "preparation": [
+    "Authenticate to Earthdata before retrieving NASADEM tiles.",
+    "Download the MOLA topography raster and NASADEM tiles that intersect each declared 20 km study window.",
+    "Record source URL, retrieval timestamp, SHA-256, and native raster metadata in data/training/raw/source-checksums.json.",
+    "Clip each raster to its declared window, mask no-data values, and retain body-specific coordinate metadata.",
+    "Calculate all three feature definitions with the declared 3 km window before fitting body-specific normalisation transforms."
+  ],
+  "publicationBoundary": "No raw, interim, or processed raster may enter public/; a later validated integrator handoff may create small web-demo assets."
+}

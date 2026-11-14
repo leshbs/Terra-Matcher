@@ -50,6 +50,14 @@ export function validateTrainingCatalog({ datasets, locations, manifest }) {
         throw new Error(`unknown dataset ID: ${datasetId}`);
       }
     }
+
+    if (location.kind === 'candidate') {
+      for (const field of ['name', 'operationalHypothesis', 'limitations', 'status']) {
+        if (!location[field] || (Array.isArray(location[field]) && location[field].length === 0)) {
+          throw new Error(`candidate ${location.id} missing ${field}`);
+        }
+      }
+    }
   }
 
   const marsScenarioCount = locations.filter(
@@ -65,6 +73,13 @@ export function validateTrainingCatalog({ datasets, locations, manifest }) {
 
   if (earthCandidateCount !== 5 && earthCandidateCount !== 0) {
     throw new Error('catalog must contain exactly five Earth candidates');
+  }
+
+  const requiredFeatureKeys = ['median_slope_deg', 'terrain_roughness_m', 'relative_relief_m'];
+  const featureKeys = (manifest.features ?? []).map((feature) => feature.key);
+
+  if (featureKeys.length !== requiredFeatureKeys.length || !requiredFeatureKeys.every((key) => featureKeys.includes(key))) {
+    throw new Error('manifest must declare the three required features');
   }
 
   for (const feature of manifest.features ?? []) {

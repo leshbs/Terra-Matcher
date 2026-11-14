@@ -59,6 +59,33 @@ test('rejects public output paths and orphan dataset references', () => {
   );
 });
 
+test('rejects incomplete candidates and incomplete feature contracts', () => {
+  const candidate = {
+    id: 'earth-example-v1',
+    name: 'Example candidate',
+    kind: 'candidate',
+    body: 'earth',
+    center: { latitude: 1, longitude: 1 },
+    radiusKm: 20,
+    datasetIds: ['mars-mola-megdr-v2'],
+    limitations: ['Example limitation.'],
+    status: 'planned-for-preparation',
+  };
+  const incompleteCandidates = Array.from({ length: 5 }, (_, index) => ({
+    ...candidate,
+    id: `earth-example-${index}-v1`,
+  }));
+
+  assert.throws(
+    () => validateTrainingCatalog({ ...valid, locations: [valid.locations[0], ...incompleteCandidates] }),
+    /operationalHypothesis/,
+  );
+  assert.throws(
+    () => validateTrainingCatalog({ ...valid, manifest: { ...valid.manifest, features: valid.manifest.features.slice(0, 2) } }),
+    /three required features/,
+  );
+});
+
 const loadJson = async (path) => JSON.parse(await readFile(new URL(path, import.meta.url), 'utf8'));
 
 test('dataset and location registries contain one Mars scenario and five Earth candidates', async () => {
@@ -72,6 +99,36 @@ test('dataset and location registries contain one Mars scenario and five Earth c
       datasets: datasetDocument.datasets,
       locations: locationDocument.locations,
       manifest: valid.manifest,
+    }),
+    { datasetCount: 2, marsScenarioCount: 1, earthCandidateCount: 5 },
+  );
+});
+
+test('preparation manifest has exactly the three comparable features', async () => {
+  const manifest = await loadJson('../../data/training/preparation-manifest.json');
+
+  assert.equal(manifest.modelRunId, '2026-11-14-mvp-v1');
+  assert.equal(manifest.rawRoot, 'data/training/raw');
+  assert.equal(manifest.outputRoot.startsWith('public/'), false);
+  assert.deepEqual(
+    manifest.features.map((feature) => feature.key),
+    ['median_slope_deg', 'terrain_roughness_m', 'relative_relief_m'],
+  );
+  assert.ok(manifest.features.every((feature) => feature.localWindowKm === 3));
+});
+
+test('complete committed catalog validates against its manifest', async () => {
+  const [datasetDocument, locationDocument, manifest] = await Promise.all([
+    loadJson('../../data/training/datasets.json'),
+    loadJson('../../data/training/locations.json'),
+    loadJson('../../data/training/preparation-manifest.json'),
+  ]);
+
+  assert.deepEqual(
+    validateTrainingCatalog({
+      datasets: datasetDocument.datasets,
+      locations: locationDocument.locations,
+      manifest,
     }),
     { datasetCount: 2, marsScenarioCount: 1, earthCandidateCount: 5 },
   );
