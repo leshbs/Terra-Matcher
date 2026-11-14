@@ -49,7 +49,7 @@
 
 - [x] Menjalankan weighted similarity ranking dan menghasilkan contribution per fitur.
 - [x] Menjalankan sanity check serta memastikan score/coverage valid.
-- [ ] Menyerahkan paket final maksimal awal Hari 2 kepada Anggota 1:
+- [x] Menyerahkan paket final maksimal awal Hari 2 kepada Anggota 1:
 
 ```text
 model_manifest.json

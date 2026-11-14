@@ -34,6 +34,7 @@ class RunRankingsTests(unittest.TestCase):
         locations = [
             {
                 "id": "mars-reference",
+                "name": "Mars reference",
                 "body": "mars",
                 "kind": "reference-scenario",
                 "center": {"latitude": 0.0, "longitude": 0.0},
@@ -44,6 +45,7 @@ class RunRankingsTests(unittest.TestCase):
             *[
                 {
                     "id": f"earth-{index}",
+                    "name": f"Earth candidate {index}",
                     "body": "earth",
                     "kind": "candidate",
                     "center": {"latitude": float(index), "longitude": float(index)},
@@ -88,6 +90,20 @@ class RunRankingsTests(unittest.TestCase):
             output_root = training_root / "processed" / "2026-11-14-mvp-v1"
             self.assertTrue((output_root / "validation-report.json").exists())
             self.assertTrue((output_root / "location-evidence.json").exists())
+            geojson = json.loads((output_root / "candidates.geojson").read_text(encoding="utf-8"))
+            self.assertEqual(geojson["type"], "FeatureCollection")
+            self.assertEqual(len(geojson["features"]), 6)
+            reference_features = [
+                feature for feature in geojson["features"] if feature["properties"]["kind"] == "reference-scenario"
+            ]
+            candidate_features = [
+                feature for feature in geojson["features"] if feature["properties"]["kind"] == "candidate"
+            ]
+            self.assertEqual(len(reference_features), 1)
+            self.assertEqual(len(candidate_features), 5)
+            self.assertTrue(all(feature["properties"]["modelRunId"] for feature in geojson["features"]))
+            self.assertTrue(all(feature["properties"]["rank"] >= 1 for feature in candidate_features))
+            self.assertNotIn("rank", reference_features[0]["properties"])
 
 
 if __name__ == "__main__":

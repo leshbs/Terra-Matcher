@@ -127,6 +127,46 @@ def _evidence(location: dict[str, Any], ranking: dict[str, Any], contributions: 
     }
 
 
+def _candidates_geojson(
+    locations: list[dict[str, Any]], rankings: list[dict[str, Any]], evidence: list[dict[str, Any]]
+) -> dict[str, Any]:
+    rankings_by_location = {ranking["candidateLocationId"]: ranking for ranking in rankings}
+    evidence_by_location = {item["locationId"]: item for item in evidence}
+    features = []
+    for location in locations:
+        properties = {
+            "id": location["id"],
+            "name": location["name"],
+            "body": location["body"],
+            "kind": location["kind"],
+            "modelRunId": MODEL_RUN_ID,
+            "datasetIds": location["datasetIds"],
+        }
+        if location["kind"] == "candidate":
+            ranking = rankings_by_location[location["id"]]
+            location_evidence = evidence_by_location[location["id"]]
+            properties.update(
+                {
+                    "rank": ranking["rank"],
+                    "similarityScore": ranking["similarityScore"],
+                    "dataCoverage": ranking["dataCoverage"],
+                    "strongestMatchFeatureKey": location_evidence["strongestMatch"]["featureKey"],
+                    "largestMismatchFeatureKey": location_evidence["largestMismatch"]["featureKey"],
+                }
+            )
+        features.append(
+            {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [location["center"]["longitude"], location["center"]["latitude"]],
+                },
+                "properties": properties,
+            }
+        )
+    return {"type": "FeatureCollection", "features": features}
+
+
 def _validate_outputs(outputs: dict[str, Any]) -> dict[str, Any]:
     rankings = outputs["rankings"]
     contributions = outputs["contributions"]
@@ -139,6 +179,17 @@ def _validate_outputs(outputs: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("ranking score or coverage is invalid")
     if len(outputs["manifest"]["transforms"]) != 6:
         raise ValueError("missing normalisation transform")
+    geojson_features = outputs["geojson"]["features"]
+    references = [feature for feature in geojson_features if feature["properties"]["kind"] == "reference-scenario"]
+    candidates = [feature for feature in geojson_features if feature["properties"]["kind"] == "candidate"]
+    if outputs["geojson"]["type"] != "FeatureCollection" or len(geojson_features) != 6:
+        raise ValueError("candidate GeoJSON has an unexpected shape")
+    if len(references) != 1 or len(candidates) != 5:
+        raise ValueError("candidate GeoJSON must include one reference and five candidates")
+    if any(not feature["properties"]["modelRunId"] for feature in geojson_features):
+        raise ValueError("candidate GeoJSON is missing model provenance")
+    if any("rank" not in feature["properties"] for feature in candidates):
+        raise ValueError("candidate GeoJSON is missing candidate rank")
     return {
         "modelRunId": MODEL_RUN_ID,
         "status": "passed",
@@ -206,7 +257,8 @@ def build_ranked_outputs(
     rankings.sort(key=lambda row: (-row["similarityScore"], row["candidateLocationId"]))
     for index, ranking in enumerate(rankings, start=1):
         ranking["rank"] = index
-    outputs = {"studyFeatures": study_features, "manifest": manifest, "features": enriched_features, "rankings": rankings, "contributions": contributions, "evidence": evidence}
+    geojson = _candidates_geojson(locations, rankings, evidence)
+    outputs = {"studyFeatures": study_features, "manifest": manifest, "features": enriched_features, "rankings": rankings, "contributions": contributions, "evidence": evidence, "geojson": geojson}
     validation = _validate_outputs(outputs)
     _write_json(output_root / "study-population-features.json", {"modelRunId": MODEL_RUN_ID, "features": study_features})
     _write_json(output_root / "model_manifest.json", manifest)
@@ -214,6 +266,7 @@ def build_ranked_outputs(
     _write_json(output_root / "rankings.json", {"modelRunId": MODEL_RUN_ID, "rankings": rankings})
     _write_json(output_root / "ranking-contributions.json", {"modelRunId": MODEL_RUN_ID, "contributions": contributions})
     _write_json(output_root / "location-evidence.json", {"modelRunId": MODEL_RUN_ID, "evidence": evidence})
+    _write_json(output_root / "candidates.geojson", geojson)
     _write_json(output_root / "validation-report.json", validation)
     outputs["validation"] = validation
     return outputs
