@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0.0",
+  "locations": [
+    {
+      "id": "mars-gale-aeolis-palus-v1",
+      "name": "Gale Crater / Aeolis Palus reference window",
+      "kind": "reference-scenario",
+      "body": "mars",
+      "center": { "latitude": -4.5895, "longitude": 137.4417 },
+      "radiusKm": 20,
+      "datasetIds": ["mars-mola-megdr-v2"],
+      "operationalHypothesis": "Reference terrain window for rover mobility and sedimentary-landscape interpretation.",
+      "limitations": [
+        "Terrain metrics do not model Mars atmospheric pressure, gravity, radiation, or thermal regime.",
+        "This reference window is not a mission-site recommendation."
+      ],
+      "status": "planned-for-preparation"
+    },
+    {
+      "id": "earth-atacama-desert-chile-v1",
+      "name": "Atacama Desert, Chile candidate window",
+      "kind": "candidate",
+      "body": "earth",
+      "center": { "latitude": -23.479, "longitude": -68.312 },
+      "radiusKm": 20,
+      "datasetIds": ["earth-nasadem-hgt-v001"],
+      "operationalHypothesis": "Hyper-arid terrain setting for mobility and instrument-fieldwork rehearsal hypotheses.",
+      "limitations": ["Does not reproduce Mars atmosphere, gravity, radiation, biological conditions, access constraints, or land permissions."],
+      "status": "planned-for-preparation"
+    },
+    {
+      "id": "earth-wadi-rum-jordan-v1",
+      "name": "Wadi Rum, Jordan candidate window",
+      "kind": "candidate",
+      "body": "earth",
+      "center": { "latitude": 29.576, "longitude": 35.421 },
+      "radiusKm": 20,
+      "datasetIds": ["earth-nasadem-hgt-v001"],
+      "operationalHypothesis": "Erosional sandstone terrain for navigation and outcrop-observation comparisons.",
+      "limitations": ["Does not reproduce Mars atmosphere, gravity, radiation, biological conditions, access constraints, or land permissions."],
+      "status": "planned-for-preparation"
+    },
+    {
+      "id": "earth-mauna-kea-hawaii-v1",
+      "name": "Mauna Kea, Hawai'i candidate window",
+      "kind": "candidate",
+      "body": "earth",
+      "center": { "latitude": 19.8207, "longitude": -155.4681 },
+      "radiusKm": 20,
+      "datasetIds": ["earth-nasadem-hgt-v001"],
+      "operationalHypothesis": "Volcanic highland terrain for rover traversal and volcanic-regolith hypotheses.",
+      "limitations": ["Does not reproduce Mars atmosphere, gravity, radiation, biological conditions, access constraints, or land permissions."],
+      "status": "planned-for-preparation"
+    },
+    {
+      "id": "earth-teide-tenerife-v1",
+      "name": "Teide, Tenerife candidate window",
+      "kind": "candidate",
+      "body": "earth",
+      "center": { "latitude": 28.2724, "longitude": -16.6425 },
+      "radiusKm": 20,
+      "datasetIds": ["earth-nasadem-hgt-v001"],
+      "operationalHypothesis": "Volcanic edifice terrain for slope and roughness comparison.",
+      "limitations": ["Does not reproduce Mars atmosphere, gravity, radiation, biological conditions, access constraints, or land permissions."],
+      "status": "planned-for-preparation"
+    },
+    {
+      "id": "earth-craters-of-the-moon-idaho-v1",
+      "name": "Craters of the Moon, Idaho candidate window",
+      "kind": "candidate",
+      "body": "earth",
+      "center": { "latitude": 43.4166, "longitude": -113.5164 },
+      "radiusKm": 20,
+      "datasetIds": ["earth-nasadem-hgt-v001"],
+      "operationalHypothesis": "Basaltic volcanic terrain for navigation and geologic-process training hypotheses.",
+      "limitations": ["Does not reproduce Mars atmosphere, gravity, radiation, biological conditions, access constraints, or land permissions."],
+      "status": "planned-for-preparation"
+    }
+  ]
+}
