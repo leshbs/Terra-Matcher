@@ -36,7 +36,11 @@ export async function GET() {
 
     if (error) {
       // Do not expose raw database errors or configuration to clients.
-      console.error("[api/scenarios] Supabase query failed.");
+      console.error("[api/scenarios] Supabase query failed.", {
+  code: error.code,
+  message: error.message,
+  hint: error.hint,
+});
       return errorResponse(
         "SCENARIOS_UNAVAILABLE",
         "Scenario data is temporarily unavailable.",
