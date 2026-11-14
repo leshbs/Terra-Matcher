@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { validateTrainingCatalog } from '../src/terra_analog/validate-training-catalog.mjs';
 
 const valid = {
@@ -55,5 +56,23 @@ test('rejects public output paths and orphan dataset references', () => {
   assert.throws(
     () => validateTrainingCatalog({ ...valid, locations: [{ ...valid.locations[0], datasetIds: ['missing'] }] }),
     /missing/,
+  );
+});
+
+const loadJson = async (path) => JSON.parse(await readFile(new URL(path, import.meta.url), 'utf8'));
+
+test('dataset and location registries contain one Mars scenario and five Earth candidates', async () => {
+  const [datasetDocument, locationDocument] = await Promise.all([
+    loadJson('../../data/training/datasets.json'),
+    loadJson('../../data/training/locations.json'),
+  ]);
+
+  assert.deepEqual(
+    validateTrainingCatalog({
+      datasets: datasetDocument.datasets,
+      locations: locationDocument.locations,
+      manifest: valid.manifest,
+    }),
+    { datasetCount: 2, marsScenarioCount: 1, earthCandidateCount: 5 },
   );
 });

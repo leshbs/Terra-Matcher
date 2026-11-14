@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "datasets": [
+    {
+      "id": "mars-mola-megdr-v2",
+      "provider": "NASA PDS Geosciences Node",
+      "product": "Mars Global Surveyor Mars Orbiter Laser Altimeter Mission Experiment Gridded Data Records: topography",
+      "version": "2.0 / PDS4 maintained bundle",
+      "url": "https://pds-geosciences.wustl.edu/missions/mgs/megdr.html",
+      "accessUrl": "https://planetarymaps.usgs.gov/mosaic/Mars_MGS_MOLA_DEM_mosaic_global_463m.tif",
+      "license": "CC0 / public domain; retain source citation",
+      "nativeResolution": { "value": 128, "unit": "pixels per degree", "approximateMetersAtEquator": 463 },
+      "unit": "m above MOLA areoid",
+      "citation": "Smith, D. E., et al. (2001). Mars Orbiter Laser Altimeter: Experiment summary after the first year of global mapping of Mars. Journal of Geophysical Research: Planets, 106(E10), 23689-23722. https://doi.org/10.1029/2000JE001364",
+      "accessedAt": "2026-11-14",
+      "limitations": [
+        "The gridded DEM includes interpolation between altimetry tracks.",
+        "Its approximately 463 m equatorial sampling is coarser than the Earth DEM and must not be visually over-interpreted."
+      ]
+    },
+    {
+      "id": "earth-nasadem-hgt-v001",
+      "provider": "NASA EOSDIS Land Processes Distributed Active Archive Center",
+      "product": "NASADEM Merged DEM Global 1 arc second",
+      "version": "V001",
+      "url": "https://doi.org/10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001",
+      "accessUrl": "https://search.earthdata.nasa.gov/search?q=NASADEM_HGT%20001",
+      "license": "NASA Earth science data use guidance; verify collection and granule metadata before redistribution",
+      "nativeResolution": { "value": 1, "unit": "arc-second", "approximateMetersAtEquator": 30 },
+      "unit": "m relative to the EGM96 geoid",
+      "citation": "NASA JPL (2020). NASADEM Merged DEM Global 1 arc second V001 [Data set]. NASA EOSDIS Land Processes DAAC. https://doi.org/10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001",
+      "accessedAt": "2026-11-14",
+      "limitations": [
+        "Ground sampling distance varies with latitude on the geographic grid.",
+        "Earth terrain and the EGM96 vertical reference are not physically equivalent to Mars MOLA terrain and areoid."
+      ]
+    }
+  ]
+}
