@@ -1,3 +1,5 @@
 data/training/raw/
 data/training/interim/
 data/training/processed/
+__pycache__/
+*.py[cod]

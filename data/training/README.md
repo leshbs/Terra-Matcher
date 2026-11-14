@@ -28,3 +28,15 @@ The test verifies provenance fields, coordinate bounds, dataset references, the 
 6. Derive slope, terrain roughness, and relative relief with the 3 km local window specified in `preparation-manifest.json`.
 
 The `raw/`, `interim/`, and `processed/` folders are ignored by Git. They must not be placed in `public/`, uploaded to the web deployment, or treated as a user-downloadable training corpus. Only a later validated handoff owned by the integrator may create small, cited files in `public/data/demo/`.
+
+## Generated terrain package
+
+After the downloaded MOLA and NASADEM rasters are present, generate the local source-backed terrain package with:
+
+```powershell
+$py = 'C:\Users\Lesharo Bladen S\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
+$env:PYTHONPATH = 'pipeline/src'
+& $py -m terra_analog.run_training_features --training-root data/training
+```
+
+The command writes `raw/source-checksums.json` and, for model run `2026-11-14-mvp-v1`, `processed/2026-11-14-mvp-v1/location-features.json` plus `processing-report.json`. These artifacts are generated from locally downloaded source rasters, remain ignored by Git, and report terrain metrics only. They are not analog-site approval, rover-safety assessment, or mission-planning output.

@@ -1,7 +1,10 @@
 import unittest
+from pathlib import Path
 
 import numpy as np
 
+from terra_analog.run_training_features import build_location_features
+from terra_analog.source_rasters import NasademCatalog
 from terra_analog.terrain_features import derive_feature_summary
 
 
@@ -27,6 +30,43 @@ class TerrainFeatureTests(unittest.TestCase):
 
         self.assertEqual(result["relative_relief_m"]["qualityFlag"], "partial-coverage")
         self.assertIsNotNone(result["relative_relief_m"]["rawValue"])
+
+    def test_study_boundary_is_not_counted_as_source_missingness(self):
+        rows, columns = np.mgrid[0:15, 0:15]
+        study_mask = np.hypot(rows - 7, columns - 7) <= 7
+        values = np.where(study_mask, 100.0, np.nan)
+
+        result = derive_feature_summary(
+            values,
+            spacing_m=500,
+            window_cells=7,
+            analysis_mask=study_mask,
+        )
+
+        self.assertEqual(result["relative_relief_m"]["coverage"], 1.0)
+        self.assertEqual(result["relative_relief_m"]["qualityFlag"], "source-backed-derived")
+
+    def test_nasadem_catalog_uses_lower_left_tile_name(self):
+        catalog = NasademCatalog(Path("data/training/raw/earth"))
+
+        self.assertEqual(catalog.tile_path(29.576, 35.421).name, "n29e035.hgt")
+        self.assertEqual(catalog.tile_path(-23.479, -68.312).name, "s24w069.hgt")
+
+    def test_source_backed_run_exports_three_records_per_location(self):
+        records, report = build_location_features(Path("data/training"))
+
+        self.assertEqual(len(records), 18)
+        self.assertEqual(report["summary"]["locations"], 6)
+        self.assertTrue(all(record["sourceDatasetId"] for record in records))
+        self.assertTrue(all(record["unit"] for record in records))
+        self.assertTrue(all(record["qualityFlag"] for record in records))
+        self.assertTrue(
+            all(
+                record["qualityFlag"]
+                in {"source-backed-derived", "partial-coverage", "invalid"}
+                for record in records
+            )
+        )
 
 
 if __name__ == "__main__":

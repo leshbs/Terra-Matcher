@@ -34,6 +34,7 @@ def derive_feature_summary(
     elevation: np.ndarray,
     spacing_m: float,
     window_cells: int,
+    analysis_mask: np.ndarray | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Summarise slope, local roughness, and local relief from an elevation grid.
 
@@ -54,8 +55,18 @@ def derive_feature_summary(
     half_window = window_cells // 2
     windows = sliding_window_view(values, (window_cells, window_cells))
     window_is_valid = np.isfinite(windows).all(axis=(-2, -1))
-    possible_cells = window_is_valid.size
-    valid_cell_count = int(window_is_valid.sum())
+    if analysis_mask is None:
+        center_mask = np.ones(window_is_valid.shape, dtype=bool)
+    else:
+        if analysis_mask.shape != values.shape:
+            raise ValueError("analysis_mask must match the elevation grid shape")
+        center_mask = sliding_window_view(
+            analysis_mask,
+            (window_cells, window_cells),
+        ).all(axis=(-2, -1))
+    usable_windows = window_is_valid & center_mask
+    possible_cells = int(center_mask.sum())
+    valid_cell_count = int(usable_windows.sum())
     coverage = valid_cell_count / possible_cells
 
     dz_dx = (values[1:-1, 2:] - values[1:-1, :-2]) / (2 * spacing_m)
@@ -64,8 +75,8 @@ def derive_feature_summary(
     slope[1:-1, 1:-1] = np.degrees(np.arctan(np.hypot(dz_dx, dz_dy)))
 
     center_slope = slope[half_window:-half_window, half_window:-half_window]
-    slope_values = center_slope[window_is_valid]
-    valid_windows = windows[window_is_valid]
+    slope_values = center_slope[usable_windows]
+    valid_windows = windows[usable_windows]
     roughness_values = np.std(valid_windows, axis=(1, 2))
     relief_values = np.max(valid_windows, axis=(1, 2)) - np.min(valid_windows, axis=(1, 2))
 
