@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 import hashlib
 import json
 import math
@@ -67,8 +68,24 @@ def _coordinates(center: dict[str, float], body: str, radius_m: int = 20_000) ->
     return latitudes, longitudes, circle_mask
 
 
-def _sample_location(location: dict[str, Any], sampler: Any) -> tuple[np.ndarray, np.ndarray]:
-    latitudes, longitudes, circle_mask = _coordinates(location["center"], location["body"])
+def offset_location(location: dict[str, Any], east_km: float, north_km: float) -> dict[str, Any]:
+    """Return a copied location translated by a local east/north offset."""
+    result = deepcopy(location)
+    latitude = float(location["center"]["latitude"])
+    if location["body"] == "mars":
+        latitude_m = math.pi * MARS_RADIUS_M / 180
+        longitude_m = latitude_m * math.cos(math.radians(latitude))
+    else:
+        latitude_m, longitude_m = _earth_meters_per_degree(latitude)
+    result["center"]["latitude"] = latitude + (north_km * 1_000 / latitude_m)
+    result["center"]["longitude"] = float(location["center"]["longitude"]) + (east_km * 1_000 / longitude_m)
+    return result
+
+
+def _sample_location(
+    location: dict[str, Any], sampler: Any, radius_m: int = 20_000
+) -> tuple[np.ndarray, np.ndarray]:
+    latitudes, longitudes, circle_mask = _coordinates(location["center"], location["body"], radius_m=radius_m)
     elevation = np.full(latitudes.shape, np.nan)
     for row, column in np.argwhere(circle_mask):
         value = sampler.sample(float(latitudes[row, column]), float(longitudes[row, column]))
@@ -77,8 +94,11 @@ def _sample_location(location: dict[str, Any], sampler: Any) -> tuple[np.ndarray
     return elevation, circle_mask
 
 
-def _records_for_location(location: dict[str, Any], sampler: Any) -> list[dict[str, Any]]:
-    elevation, circle_mask = _sample_location(location, sampler)
+def build_location_feature_records(
+    location: dict[str, Any], sampler: Any, radius_m: int = 20_000
+) -> list[dict[str, Any]]:
+    """Derive the three terrain features for a source-backed local profile."""
+    elevation, circle_mask = _sample_location(location, sampler, radius_m=radius_m)
     summaries = derive_feature_summary(
         elevation,
         spacing_m=ANALYSIS_RESOLUTION_M,
@@ -130,7 +150,7 @@ def build_location_features(training_root: Path) -> tuple[list[dict[str, Any]], 
         if source_id not in dataset_by_id:
             raise ValueError(f"location references unknown dataset: {source_id}")
         sampler = mars_raster if location["body"] == "mars" else earth_catalog
-        records.extend(_records_for_location(location, sampler))
+        records.extend(build_location_feature_records(location, sampler))
 
     checksums = {
         "modelRunId": MODEL_RUN_ID,

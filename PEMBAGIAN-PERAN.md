@@ -39,16 +39,16 @@
 
 ### Hari 1
 
-- [ ] Mencatat provider, produk, URL, resolusi, unit, lisensi, dan citation dalam `datasets.json`.
-- [ ] Menyiapkan satu Mars scenario dan lima kandidat Bumi.
-- [ ] Menghasilkan raw value, unit, dataset ID, normalized value, dan quality flag untuk tiga fitur.
-- [ ] Menyediakan fixture `locations.json` dan `location-features.json`.
-- [ ] Menyimpan kode/data kerja di `pipeline/`, bukan `public/`.
+- [x] Mencatat provider, produk, URL, resolusi, unit, lisensi, dan citation dalam `datasets.json`.
+- [x] Menyiapkan satu Mars scenario dan lima kandidat Bumi.
+- [x] Menghasilkan raw value, unit, dataset ID, normalized value, dan quality flag untuk tiga fitur.
+- [x] Menyediakan `locations.json` dan `location-features.json` berbasis sumber; fixture tidak diperlukan karena data source-backed tersedia.
+- [x] Menyimpan kode di `pipeline/` dan data kerja di `data/training/`, bukan `public/`.
 
 ### Hari 2
 
-- [ ] Menjalankan weighted similarity ranking dan menghasilkan contribution per fitur.
-- [ ] Menjalankan sanity check serta memastikan score/coverage valid.
+- [x] Menjalankan weighted similarity ranking dan menghasilkan contribution per fitur.
+- [x] Menjalankan sanity check serta memastikan score/coverage valid.
 - [ ] Menyerahkan paket final maksimal awal Hari 2 kepada Anggota 1:
 
 ```text
