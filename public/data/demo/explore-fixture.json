@@ -1,0 +1,1345 @@
+{
+ "data": {
+  "datasets": {
+   "mars-mola-megdr-v2": {
+    "id": "mars-mola-megdr-v2",
+    "short": "MOLA MEGDR v2",
+    "provider": "NASA PDS Geosciences Node",
+    "resolution": "128 pixels per degree (~463 m)",
+    "unit": "m above MOLA areoid",
+    "license": "CC0 / public domain; retain source citation",
+    "citation": "Smith, D. E., et al. (2001). Mars Orbiter Laser Altimeter: Experiment summary after the first year of global mapping of Mars. Journal of Geophysical Research: Planets, 106(E10), 23689-23722. https://doi.org/10.1029/2000JE001364",
+    "limitations": [
+     "The gridded DEM includes interpolation between altimetry tracks.",
+     "Its approximately 463 m equatorial sampling is coarser than the Earth DEM and must not be visually over-interpreted."
+    ]
+   },
+   "earth-nasadem-hgt-v001": {
+    "id": "earth-nasadem-hgt-v001",
+    "short": "NASADEM HGT V001",
+    "provider": "NASA EOSDIS Land Processes Distributed Active Archive Center",
+    "resolution": "1 arc-second (~30 m)",
+    "unit": "m relative to the EGM96 geoid",
+    "license": "NASA Earth science data use guidance; verify collection and granule metadata before redistribution",
+    "citation": "NASA JPL (2020). NASADEM Merged DEM Global 1 arc second V001 [Data set]. NASA EOSDIS Land Processes DAAC. https://doi.org/10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001",
+    "limitations": [
+     "Ground sampling distance varies with latitude on the geographic grid.",
+     "Earth terrain and the EGM96 vertical reference are not physically equivalent to Mars MOLA terrain and areoid."
+    ]
+   }
+  },
+  "windows": [
+   {
+    "id": "mars-gale-aeolis-palus-v1",
+    "name": "Gale Crater / Aeolis Palus reference window",
+    "kind": "reference-scenario",
+    "body": "mars",
+    "center": [
+     137.4417,
+     -4.5895
+    ],
+    "datasetId": "mars-mola-megdr-v2",
+    "hypothesis": "Reference terrain window for rover mobility and sedimentary-landscape interpretation.",
+    "limitations": [
+     "Terrain metrics do not model Mars atmospheric pressure, gravity, radiation, or thermal regime.",
+     "This reference window is not a mission-site recommendation."
+    ],
+    "features": {
+     "slope": 2.44,
+     "rough": 44.48,
+     "relief": 184.0
+    },
+    "points": [
+     {
+      "e": -8,
+      "n": -8,
+      "slope": 4.86,
+      "rough": 75.73,
+      "relief": 290.0
+     },
+     {
+      "e": -8,
+      "n": -4,
+      "slope": 0.29,
+      "rough": 8.44,
+      "relief": 48.0
+     },
+     {
+      "e": -8,
+      "n": 0,
+      "slope": 0.18,
+      "rough": 4.38,
+      "relief": 23.0
+     },
+     {
+      "e": -8,
+      "n": 4,
+      "slope": 0.58,
+      "rough": 10.97,
+      "relief": 42.0
+     },
+     {
+      "e": -8,
+      "n": 8,
+      "slope": 1.09,
+      "rough": 20.79,
+      "relief": 83.0
+     },
+     {
+      "e": -4,
+      "n": -8,
+      "slope": 6.84,
+      "rough": 116.23,
+      "relief": 460.0
+     },
+     {
+      "e": -4,
+      "n": -4,
+      "slope": 1.92,
+      "rough": 34.29,
+      "relief": 136.0
+     },
+     {
+      "e": -4,
+      "n": 0,
+      "slope": 0.46,
+      "rough": 6.85,
+      "relief": 29.0
+     },
+     {
+      "e": -4,
+      "n": 4,
+      "slope": 0.65,
+      "rough": 11.18,
+      "relief": 46.0
+     },
+     {
+      "e": -4,
+      "n": 8,
+      "slope": 1.0,
+      "rough": 17.31,
+      "relief": 68.0
+     },
+     {
+      "e": 0,
+      "n": -8,
+      "slope": 11.0,
+      "rough": 174.59,
+      "relief": 673.0
+     },
+     {
+      "e": 0,
+      "n": -4,
+      "slope": 4.59,
+      "rough": 84.64,
+      "relief": 325.0
+     },
+     {
+      "e": 0,
+      "n": 0,
+      "slope": 0.64,
+      "rough": 8.87,
+      "relief": 38.0
+     },
+     {
+      "e": 0,
+      "n": 4,
+      "slope": 0.77,
+      "rough": 12.67,
+      "relief": 53.0
+     },
+     {
+      "e": 0,
+      "n": 8,
+      "slope": 1.11,
+      "rough": 18.2,
+      "relief": 73.0
+     },
+     {
+      "e": 4,
+      "n": -8,
+      "slope": 12.74,
+      "rough": 240.86,
+      "relief": 1018.0
+     },
+     {
+      "e": 4,
+      "n": -4,
+      "slope": 7.1,
+      "rough": 134.44,
+      "relief": 597.0
+     },
+     {
+      "e": 4,
+      "n": 0,
+      "slope": 1.72,
+      "rough": 36.81,
+      "relief": 148.0
+     },
+     {
+      "e": 4,
+      "n": 4,
+      "slope": 1.18,
+      "rough": 12.96,
+      "relief": 50.0
+     },
+     {
+      "e": 4,
+      "n": 8,
+      "slope": 0.85,
+      "rough": 16.34,
+      "relief": 63.0
+     },
+     {
+      "e": 8,
+      "n": -8,
+      "slope": 18.65,
+      "rough": 331.96,
+      "relief": 1342.0
+     },
+     {
+      "e": 8,
+      "n": -4,
+      "slope": 11.93,
+      "rough": 195.89,
+      "relief": 791.0
+     },
+     {
+      "e": 8,
+      "n": 0,
+      "slope": 6.7,
+      "rough": 94.76,
+      "relief": 375.0
+     },
+     {
+      "e": 8,
+      "n": 4,
+      "slope": 2.66,
+      "rough": 40.72,
+      "relief": 144.0
+     },
+     {
+      "e": 8,
+      "n": 8,
+      "slope": 1.36,
+      "rough": 21.67,
+      "relief": 73.0
+     }
+    ]
+   },
+   {
+    "id": "earth-atacama-desert-chile-v1",
+    "name": "Atacama Desert, Chile candidate window",
+    "kind": "candidate",
+    "body": "earth",
+    "center": [
+     -68.312,
+     -23.479
+    ],
+    "datasetId": "earth-nasadem-hgt-v001",
+    "hypothesis": "Hyper-arid terrain setting for mobility and instrument-fieldwork rehearsal hypotheses.",
+    "limitations": [
+     "Does not reproduce Mars atmosphere, gravity, radiation, biological conditions, access constraints, or land permissions."
+    ],
+    "features": {
+     "slope": 0.13,
+     "rough": 1.3,
+     "relief": 6.0
+    },
+    "points": [
+     {
+      "e": -8,
+      "n": -8,
+      "slope": 0.49,
+      "rough": 9.11,
+      "relief": 69.0
+     },
+     {
+      "e": -8,
+      "n": -4,
+      "slope": 0.11,
+      "rough": 1.18,
+      "relief": 5.0
+     },
+     {
+      "e": -8,
+      "n": 0,
+      "slope": 0.23,
+      "rough": 1.39,
+      "relief": 8.0
+     },
+     {
+      "e": -8,
+      "n": 4,
+      "slope": 0.08,
+      "rough": 1.06,
+      "relief": 6.0
+     },
+     {
+      "e": -8,
+      "n": 8,
+      "slope": 0.11,
+      "rough": 1.16,
+      "relief": 6.0
+     },
+     {
+      "e": -4,
+      "n": -8,
+      "slope": 0.13,
+      "rough": 1.56,
+      "relief": 7.0
+     },
+     {
+      "e": -4,
+      "n": -4,
+      "slope": 0.13,
+      "rough": 1.33,
+      "relief": 6.0
+     },
+     {
+      "e": -4,
+      "n": 0,
+      "slope": 0.31,
+      "rough": 4.69,
+      "relief": 28.0
+     },
+     {
+      "e": -4,
+      "n": 4,
+      "slope": 0.11,
+      "rough": 1.38,
+      "relief": 7.0
+     },
+     {
+      "e": -4,
+      "n": 8,
+      "slope": 0.08,
+      "rough": 1.12,
+      "relief": 4.0
+     },
+     {
+      "e": 0,
+      "n": -8,
+      "slope": 0.17,
+      "rough": 1.31,
+      "relief": 5.0
+     },
+     {
+      "e": 0,
+      "n": -4,
+      "slope": 0.16,
+      "rough": 2.14,
+      "relief": 13.0
+     },
+     {
+      "e": 0,
+      "n": 0,
+      "slope": 0.13,
+      "rough": 5.4,
+      "relief": 34.0
+     },
+     {
+      "e": 0,
+      "n": 4,
+      "slope": 0.13,
+      "rough": 1.21,
+      "relief": 5.0
+     },
+     {
+      "e": 0,
+      "n": 8,
+      "slope": 0.13,
+      "rough": 1.27,
+      "relief": 5.0
+     },
+     {
+      "e": 4,
+      "n": -8,
+      "slope": 0.17,
+      "rough": 1.54,
+      "relief": 8.0
+     },
+     {
+      "e": 4,
+      "n": -4,
+      "slope": 0.13,
+      "rough": 1.25,
+      "relief": 5.0
+     },
+     {
+      "e": 4,
+      "n": 0,
+      "slope": 0.13,
+      "rough": 1.28,
+      "relief": 5.0
+     },
+     {
+      "e": 4,
+      "n": 4,
+      "slope": 0.08,
+      "rough": 1.34,
+      "relief": 6.0
+     },
+     {
+      "e": 4,
+      "n": 8,
+      "slope": 0.13,
+      "rough": 1.21,
+      "relief": 5.0
+     },
+     {
+      "e": 8,
+      "n": -8,
+      "slope": 0.16,
+      "rough": 1.3,
+      "relief": 6.0
+     },
+     {
+      "e": 8,
+      "n": -4,
+      "slope": 0.18,
+      "rough": 1.39,
+      "relief": 6.0
+     },
+     {
+      "e": 8,
+      "n": 0,
+      "slope": 0.13,
+      "rough": 1.41,
+      "relief": 6.0
+     },
+     {
+      "e": 8,
+      "n": 4,
+      "slope": 0.13,
+      "rough": 1.14,
+      "relief": 5.0
+     },
+     {
+      "e": 8,
+      "n": 8,
+      "slope": 0.13,
+      "rough": 1.12,
+      "relief": 5.0
+     }
+    ],
+    "rank": 5,
+    "score": 50.92,
+    "coverage": 1.0,
+    "contributions": [
+     {
+      "featureKey": "median_slope_deg",
+      "candidateRaw": 0.13,
+      "referenceRaw": 2.44,
+      "weightedContribution": 0.1568
+     },
+     {
+      "featureKey": "terrain_roughness_m",
+      "candidateRaw": 1.3,
+      "referenceRaw": 44.48,
+      "weightedContribution": 0.1876
+     },
+     {
+      "featureKey": "relative_relief_m",
+      "candidateRaw": 6.0,
+      "referenceRaw": 184.0,
+      "weightedContribution": 0.1464
+     }
+    ],
+    "strongest": "relative_relief_m",
+    "mismatch": "terrain_roughness_m"
+   },
+   {
+    "id": "earth-wadi-rum-jordan-v1",
+    "name": "Wadi Rum, Jordan candidate window",
+    "kind": "candidate",
+    "body": "earth",
+    "center": [
+     35.421,
+     29.576
+    ],
+    "datasetId": "earth-nasadem-hgt-v001",
+    "hypothesis": "Erosional sandstone terrain for navigation and outcrop-observation comparisons.",
+    "limitations": [
+     "Does not reproduce Mars atmosphere, gravity, radiation, biological conditions, access constraints, or land permissions."
+    ],
+    "features": {
+     "slope": 3.88,
+     "rough": 71.93,
+     "relief": 312.0
+    },
+    "points": [
+     {
+      "e": -8,
+      "n": -8,
+      "slope": 5.55,
+      "rough": 58.9,
+      "relief": 227.0
+     },
+     {
+      "e": -8,
+      "n": -4,
+      "slope": 3.14,
+      "rough": 59.82,
+      "relief": 364.0
+     },
+     {
+      "e": -8,
+      "n": 0,
+      "slope": 4.64,
+      "rough": 56.65,
+      "relief": 232.0
+     },
+     {
+      "e": -8,
+      "n": 4,
+      "slope": 8.46,
+      "rough": 76.52,
+      "relief": 275.0
+     },
+     {
+      "e": -8,
+      "n": 8,
+      "slope": 5.58,
+      "rough": 87.66,
+      "relief": 342.0
+     },
+     {
+      "e": -4,
+      "n": -8,
+      "slope": 6.49,
+      "rough": 80.15,
+      "relief": 340.0
+     },
+     {
+      "e": -4,
+      "n": -4,
+      "slope": 1.64,
+      "rough": 52.42,
+      "relief": 282.0
+     },
+     {
+      "e": -4,
+      "n": 0,
+      "slope": 16.52,
+      "rough": 214.24,
+      "relief": 714.0
+     },
+     {
+      "e": -4,
+      "n": 4,
+      "slope": 8.07,
+      "rough": 116.37,
+      "relief": 520.0
+     },
+     {
+      "e": -4,
+      "n": 8,
+      "slope": 5.94,
+      "rough": 89.7,
+      "relief": 325.0
+     },
+     {
+      "e": 0,
+      "n": -8,
+      "slope": 17.95,
+      "rough": 134.79,
+      "relief": 418.0
+     },
+     {
+      "e": 0,
+      "n": -4,
+      "slope": 1.38,
+      "rough": 58.71,
+      "relief": 373.0
+     },
+     {
+      "e": 0,
+      "n": 0,
+      "slope": 4.41,
+      "rough": 205.34,
+      "relief": 627.0
+     },
+     {
+      "e": 0,
+      "n": 4,
+      "slope": 10.83,
+      "rough": 140.88,
+      "relief": 534.0
+     },
+     {
+      "e": 0,
+      "n": 8,
+      "slope": 6.77,
+      "rough": 84.48,
+      "relief": 361.0
+     },
+     {
+      "e": 4,
+      "n": -8,
+      "slope": 4.18,
+      "rough": 60.96,
+      "relief": 222.0
+     },
+     {
+      "e": 4,
+      "n": -4,
+      "slope": 7.27,
+      "rough": 83.12,
+      "relief": 349.0
+     },
+     {
+      "e": 4,
+      "n": 0,
+      "slope": 7.86,
+      "rough": 155.09,
+      "relief": 580.0
+     },
+     {
+      "e": 4,
+      "n": 4,
+      "slope": 3.64,
+      "rough": 102.76,
+      "relief": 392.0
+     },
+     {
+      "e": 4,
+      "n": 8,
+      "slope": 1.54,
+      "rough": 33.43,
+      "relief": 194.0
+     },
+     {
+      "e": 8,
+      "n": -8,
+      "slope": 1.84,
+      "rough": 58.09,
+      "relief": 332.0
+     },
+     {
+      "e": 8,
+      "n": -4,
+      "slope": 7.48,
+      "rough": 106.73,
+      "relief": 491.0
+     },
+     {
+      "e": 8,
+      "n": 0,
+      "slope": 5.5,
+      "rough": 142.52,
+      "relief": 573.0
+     },
+     {
+      "e": 8,
+      "n": 4,
+      "slope": 9.19,
+      "rough": 95.02,
+      "relief": 399.0
+     },
+     {
+      "e": 8,
+      "n": 8,
+      "slope": 3.45,
+      "rough": 39.5,
+      "relief": 202.0
+     }
+    ],
+    "rank": 3,
+    "score": 85.16,
+    "coverage": 1.0,
+    "contributions": [
+     {
+      "featureKey": "median_slope_deg",
+      "candidateRaw": 3.88,
+      "referenceRaw": 2.44,
+      "weightedContribution": 0.042
+     },
+     {
+      "featureKey": "terrain_roughness_m",
+      "candidateRaw": 71.93,
+      "referenceRaw": 44.48,
+      "weightedContribution": 0.056
+     },
+     {
+      "featureKey": "relative_relief_m",
+      "candidateRaw": 312.0,
+      "referenceRaw": 184.0,
+      "weightedContribution": 0.0504
+     }
+    ],
+    "strongest": "median_slope_deg",
+    "mismatch": "terrain_roughness_m"
+   },
+   {
+    "id": "earth-mauna-kea-hawaii-v1",
+    "name": "Mauna Kea, Hawai'i candidate window",
+    "kind": "candidate",
+    "body": "earth",
+    "center": [
+     -155.4681,
+     19.8207
+    ],
+    "datasetId": "earth-nasadem-hgt-v001",
+    "hypothesis": "Volcanic highland terrain for rover traversal and volcanic-regolith hypotheses.",
+    "limitations": [
+     "Does not reproduce Mars atmosphere, gravity, radiation, biological conditions, access constraints, or land permissions."
+    ],
+    "features": {
+     "slope": 7.05,
+     "rough": 124.72,
+     "relief": 492.0
+    },
+    "points": [
+     {
+      "e": -8,
+      "n": -8,
+      "slope": 2.24,
+      "rough": 43.32,
+      "relief": 210.0
+     },
+     {
+      "e": -8,
+      "n": -4,
+      "slope": 14.6,
+      "rough": 242.47,
+      "relief": 979.0
+     },
+     {
+      "e": -8,
+      "n": 0,
+      "slope": 10.62,
+      "rough": 186.47,
+      "relief": 734.0
+     },
+     {
+      "e": -8,
+      "n": 4,
+      "slope": 15.49,
+      "rough": 263.16,
+      "relief": 1026.0
+     },
+     {
+      "e": -8,
+      "n": 8,
+      "slope": 10.22,
+      "rough": 181.18,
+      "relief": 725.0
+     },
+     {
+      "e": -4,
+      "n": -8,
+      "slope": 6.1,
+      "rough": 152.61,
+      "relief": 607.0
+     },
+     {
+      "e": -4,
+      "n": -4,
+      "slope": 15.75,
+      "rough": 295.77,
+      "relief": 1223.0
+     },
+     {
+      "e": -4,
+      "n": 0,
+      "slope": 10.92,
+      "rough": 190.85,
+      "relief": 709.0
+     },
+     {
+      "e": -4,
+      "n": 4,
+      "slope": 14.48,
+      "rough": 245.55,
+      "relief": 1002.0
+     },
+     {
+      "e": -4,
+      "n": 8,
+      "slope": 20.81,
+      "rough": 322.02,
+      "relief": 1233.0
+     },
+     {
+      "e": 0,
+      "n": -8,
+      "slope": 12.85,
+      "rough": 188.01,
+      "relief": 696.0
+     },
+     {
+      "e": 0,
+      "n": -4,
+      "slope": 14.32,
+      "rough": 230.69,
+      "relief": 804.0
+     },
+     {
+      "e": 0,
+      "n": 0,
+      "slope": 11.48,
+      "rough": 106.88,
+      "relief": 438.0
+     },
+     {
+      "e": 0,
+      "n": 4,
+      "slope": 9.22,
+      "rough": 167.74,
+      "relief": 592.0
+     },
+     {
+      "e": 0,
+      "n": 8,
+      "slope": 18.26,
+      "rough": 317.36,
+      "relief": 1085.0
+     },
+     {
+      "e": 4,
+      "n": -8,
+      "slope": 7.39,
+      "rough": 142.41,
+      "relief": 569.0
+     },
+     {
+      "e": 4,
+      "n": -4,
+      "slope": 10.1,
+      "rough": 198.72,
+      "relief": 760.0
+     },
+     {
+      "e": 4,
+      "n": 0,
+      "slope": 8.67,
+      "rough": 138.29,
+      "relief": 523.0
+     },
+     {
+      "e": 4,
+      "n": 4,
+      "slope": 10.46,
+      "rough": 176.87,
+      "relief": 690.0
+     },
+     {
+      "e": 4,
+      "n": 8,
+      "slope": 14.59,
+      "rough": 257.39,
+      "relief": 898.0
+     },
+     {
+      "e": 8,
+      "n": -8,
+      "slope": 8.32,
+      "rough": 148.06,
+      "relief": 623.0
+     },
+     {
+      "e": 8,
+      "n": -4,
+      "slope": 9.94,
+      "rough": 190.24,
+      "relief": 777.0
+     },
+     {
+      "e": 8,
+      "n": 0,
+      "slope": 10.0,
+      "rough": 188.83,
+      "relief": 657.0
+     },
+     {
+      "e": 8,
+      "n": 4,
+      "slope": 9.93,
+      "rough": 179.27,
+      "relief": 668.0
+     },
+     {
+      "e": 8,
+      "n": 8,
+      "slope": 10.52,
+      "rough": 192.36,
+      "relief": 775.0
+     }
+    ],
+    "rank": 1,
+    "score": 97.36,
+    "coverage": 1.0,
+    "contributions": [
+     {
+      "featureKey": "median_slope_deg",
+      "candidateRaw": 7.05,
+      "referenceRaw": 2.44,
+      "weightedContribution": 0.0056
+     },
+     {
+      "featureKey": "terrain_roughness_m",
+      "candidateRaw": 124.72,
+      "referenceRaw": 44.48,
+      "weightedContribution": 0.0112
+     },
+     {
+      "featureKey": "relative_relief_m",
+      "candidateRaw": 492.0,
+      "referenceRaw": 184.0,
+      "weightedContribution": 0.0096
+     }
+    ],
+    "strongest": "median_slope_deg",
+    "mismatch": "terrain_roughness_m"
+   },
+   {
+    "id": "earth-teide-tenerife-v1",
+    "name": "Teide, Tenerife candidate window",
+    "kind": "candidate",
+    "body": "earth",
+    "center": [
+     -16.6425,
+     28.2724
+    ],
+    "datasetId": "earth-nasadem-hgt-v001",
+    "hypothesis": "Volcanic edifice terrain for slope and roughness comparison.",
+    "limitations": [
+     "Does not reproduce Mars atmosphere, gravity, radiation, biological conditions, access constraints, or land permissions."
+    ],
+    "features": {
+     "slope": 9.84,
+     "rough": 172.76,
+     "relief": 675.0
+    },
+    "points": [
+     {
+      "e": -8,
+      "n": -8,
+      "slope": 11.6,
+      "rough": 215.67,
+      "relief": 812.0
+     },
+     {
+      "e": -8,
+      "n": -4,
+      "slope": 12.07,
+      "rough": 197.41,
+      "relief": 776.0
+     },
+     {
+      "e": -8,
+      "n": 0,
+      "slope": 7.62,
+      "rough": 121.32,
+      "relief": 457.0
+     },
+     {
+      "e": -8,
+      "n": 4,
+      "slope": 8.57,
+      "rough": 143.8,
+      "relief": 551.0
+     },
+     {
+      "e": -8,
+      "n": 8,
+      "slope": 10.92,
+      "rough": 208.54,
+      "relief": 744.0
+     },
+     {
+      "e": -4,
+      "n": -8,
+      "slope": 10.93,
+      "rough": 169.42,
+      "relief": 669.0
+     },
+     {
+      "e": -4,
+      "n": -4,
+      "slope": 5.49,
+      "rough": 135.29,
+      "relief": 585.0
+     },
+     {
+      "e": -4,
+      "n": 0,
+      "slope": 16.36,
+      "rough": 268.73,
+      "relief": 1007.0
+     },
+     {
+      "e": -4,
+      "n": 4,
+      "slope": 11.26,
+      "rough": 195.45,
+      "relief": 657.0
+     },
+     {
+      "e": -4,
+      "n": 8,
+      "slope": 9.91,
+      "rough": 166.77,
+      "relief": 605.0
+     },
+     {
+      "e": 0,
+      "n": -8,
+      "slope": 12.71,
+      "rough": 144.11,
+      "relief": 472.0
+     },
+     {
+      "e": 0,
+      "n": -4,
+      "slope": 10.56,
+      "rough": 175.09,
+      "relief": 659.0
+     },
+     {
+      "e": 0,
+      "n": 0,
+      "slope": 21.39,
+      "rough": 277.89,
+      "relief": 1333.0
+     },
+     {
+      "e": 0,
+      "n": 4,
+      "slope": 17.68,
+      "rough": 295.65,
+      "relief": 1043.0
+     },
+     {
+      "e": 0,
+      "n": 8,
+      "slope": 7.53,
+      "rough": 150.77,
+      "relief": 633.0
+     },
+     {
+      "e": 4,
+      "n": -8,
+      "slope": 15.52,
+      "rough": 226.19,
+      "relief": 968.0
+     },
+     {
+      "e": 4,
+      "n": -4,
+      "slope": 1.67,
+      "rough": 78.89,
+      "relief": 443.0
+     },
+     {
+      "e": 4,
+      "n": 0,
+      "slope": 7.04,
+      "rough": 148.45,
+      "relief": 564.0
+     },
+     {
+      "e": 4,
+      "n": 4,
+      "slope": 3.89,
+      "rough": 119.88,
+      "relief": 554.0
+     },
+     {
+      "e": 4,
+      "n": 8,
+      "slope": 11.97,
+      "rough": 237.56,
+      "relief": 1005.0
+     },
+     {
+      "e": 8,
+      "n": -8,
+      "slope": 13.71,
+      "rough": 231.88,
+      "relief": 934.0
+     },
+     {
+      "e": 8,
+      "n": -4,
+      "slope": 11.17,
+      "rough": 152.69,
+      "relief": 704.0
+     },
+     {
+      "e": 8,
+      "n": 0,
+      "slope": 3.67,
+      "rough": 79.34,
+      "relief": 305.0
+     },
+     {
+      "e": 8,
+      "n": 4,
+      "slope": 7.53,
+      "rough": 169.67,
+      "relief": 656.0
+     },
+     {
+      "e": 8,
+      "n": 8,
+      "slope": 11.34,
+      "rough": 211.28,
+      "relief": 768.0
+     }
+    ],
+    "rank": 2,
+    "score": 87.6,
+    "coverage": 1.0,
+    "contributions": [
+     {
+      "featureKey": "median_slope_deg",
+      "candidateRaw": 9.84,
+      "referenceRaw": 2.44,
+      "weightedContribution": 0.0364
+     },
+     {
+      "featureKey": "terrain_roughness_m",
+      "candidateRaw": 172.76,
+      "referenceRaw": 44.48,
+      "weightedContribution": 0.042
+     },
+     {
+      "featureKey": "relative_relief_m",
+      "candidateRaw": 675.0,
+      "referenceRaw": 184.0,
+      "weightedContribution": 0.0456
+     }
+    ],
+    "strongest": "median_slope_deg",
+    "mismatch": "relative_relief_m"
+   },
+   {
+    "id": "earth-craters-of-the-moon-idaho-v1",
+    "name": "Craters of the Moon, Idaho candidate window",
+    "kind": "candidate",
+    "body": "earth",
+    "center": [
+     -113.5164,
+     43.4166
+    ],
+    "datasetId": "earth-nasadem-hgt-v001",
+    "hypothesis": "Basaltic volcanic terrain for navigation and geologic-process training hypotheses.",
+    "limitations": [
+     "Does not reproduce Mars atmosphere, gravity, radiation, biological conditions, access constraints, or land permissions."
+    ],
+    "features": {
+     "slope": 0.86,
+     "rough": 13.97,
+     "relief": 57.0
+    },
+    "points": [
+     {
+      "e": -8,
+      "n": -8,
+      "slope": 1.5,
+      "rough": 23.48,
+      "relief": 87.0
+     },
+     {
+      "e": -8,
+      "n": -4,
+      "slope": 1.81,
+      "rough": 19.18,
+      "relief": 75.0
+     },
+     {
+      "e": -8,
+      "n": 0,
+      "slope": 0.63,
+      "rough": 37.1,
+      "relief": 241.0
+     },
+     {
+      "e": -8,
+      "n": 4,
+      "slope": 1.97,
+      "rough": 51.83,
+      "relief": 259.0
+     },
+     {
+      "e": -8,
+      "n": 8,
+      "slope": 10.45,
+      "rough": 119.96,
+      "relief": 465.0
+     },
+     {
+      "e": -4,
+      "n": -8,
+      "slope": 0.75,
+      "rough": 14.7,
+      "relief": 68.0
+     },
+     {
+      "e": -4,
+      "n": -4,
+      "slope": 0.51,
+      "rough": 8.17,
+      "relief": 34.0
+     },
+     {
+      "e": -4,
+      "n": 0,
+      "slope": 0.64,
+      "rough": 20.98,
+      "relief": 113.0
+     },
+     {
+      "e": -4,
+      "n": 4,
+      "slope": 3.68,
+      "rough": 33.21,
+      "relief": 153.0
+     },
+     {
+      "e": -4,
+      "n": 8,
+      "slope": 9.57,
+      "rough": 136.33,
+      "relief": 515.0
+     },
+     {
+      "e": 0,
+      "n": -8,
+      "slope": 0.86,
+      "rough": 14.11,
+      "relief": 66.0
+     },
+     {
+      "e": 0,
+      "n": -4,
+      "slope": 0.64,
+      "rough": 9.83,
+      "relief": 51.0
+     },
+     {
+      "e": 0,
+      "n": 0,
+      "slope": 1.26,
+      "rough": 28.5,
+      "relief": 166.0
+     },
+     {
+      "e": 0,
+      "n": 4,
+      "slope": 0.69,
+      "rough": 10.42,
+      "relief": 45.0
+     },
+     {
+      "e": 0,
+      "n": 8,
+      "slope": 0.81,
+      "rough": 14.29,
+      "relief": 55.0
+     },
+     {
+      "e": 4,
+      "n": -8,
+      "slope": 1.79,
+      "rough": 17.27,
+      "relief": 73.0
+     },
+     {
+      "e": 4,
+      "n": -4,
+      "slope": 0.76,
+      "rough": 12.91,
+      "relief": 53.0
+     },
+     {
+      "e": 4,
+      "n": 0,
+      "slope": 0.8,
+      "rough": 12.64,
+      "relief": 45.0
+     },
+     {
+      "e": 4,
+      "n": 4,
+      "slope": 0.47,
+      "rough": 6.32,
+      "relief": 29.0
+     },
+     {
+      "e": 4,
+      "n": 8,
+      "slope": 0.75,
+      "rough": 12.92,
+      "relief": 47.0
+     },
+     {
+      "e": 8,
+      "n": -8,
+      "slope": 0.46,
+      "rough": 7.49,
+      "relief": 30.0
+     },
+     {
+      "e": 8,
+      "n": -4,
+      "slope": 0.49,
+      "rough": 7.72,
+      "relief": 30.0
+     },
+     {
+      "e": 8,
+      "n": 0,
+      "slope": 0.53,
+      "rough": 9.76,
+      "relief": 42.0
+     },
+     {
+      "e": 8,
+      "n": 4,
+      "slope": 0.78,
+      "rough": 12.68,
+      "relief": 49.0
+     },
+     {
+      "e": 8,
+      "n": 8,
+      "slope": 0.51,
+      "rough": 8.44,
+      "relief": 36.0
+     }
+    ],
+    "rank": 4,
+    "score": 70.0,
+    "coverage": 1.0,
+    "contributions": [
+     {
+      "featureKey": "median_slope_deg",
+      "candidateRaw": 0.86,
+      "referenceRaw": 2.44,
+      "weightedContribution": 0.0868
+     },
+     {
+      "featureKey": "terrain_roughness_m",
+      "candidateRaw": 13.97,
+      "referenceRaw": 44.48,
+      "weightedContribution": 0.1148
+     },
+     {
+      "featureKey": "relative_relief_m",
+      "candidateRaw": 57.0,
+      "referenceRaw": 184.0,
+      "weightedContribution": 0.0984
+     }
+    ],
+    "strongest": "median_slope_deg",
+    "mismatch": "terrain_roughness_m"
+   }
+  ]
+ },
+ "meta": {
+  "modelRunId": "2026-11-14-mvp-v1"
+ }
+}
