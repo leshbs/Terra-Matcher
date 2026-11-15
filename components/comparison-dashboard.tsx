@@ -181,6 +181,43 @@ export default function ComparisonDashboard() {
           </Link>
         </header>
 
+        <section className="grid gap-4 md:grid-cols-3" aria-label="Project story">
+          <article className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+            <h2 className="text-xl font-semibold">Mission rehearsal starts on Earth</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Planetary datasets can describe terrain, but they do not by
+              themselves show how an Earth landscape might support a focused
+              exploration question. This tool makes that comparison inspectable.
+            </p>
+          </article>
+          <article className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+            <h2 className="text-xl font-semibold">From Mars data to Earth-tested questions</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              The featured scenario is a 20 km Gale Crater / Aeolis Palus
+              terrain window. Earth candidates are ranked from median slope,
+              terrain roughness, and relative relief at a declared scale.
+            </p>
+          </article>
+          <article className="rounded-2xl border border-cyan-900 bg-slate-900 p-6">
+            <h2 className="text-xl font-semibold text-cyan-100">The similarity score is not the answer</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              A score is only a traceable terrain comparison. Open a candidate
+              to inspect its feature contributions, operational hypothesis,
+              data sources, and limitations before drawing conclusions.
+            </p>
+          </article>
+        </section>
+
+        <section className="rounded-2xl border border-amber-700 bg-amber-950 p-6 text-amber-100">
+          <h2 className="text-xl font-semibold">Scientific boundary</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6">
+            These are candidate hypotheses for further study, not proven analogs
+            or mission-site recommendations. The MVP does not model gravity,
+            atmosphere, radiation, temperature regimes, biological activity,
+            access, safety, regulation, or land permissions.
+          </p>
+        </section>
+
         {current.status === "loading" && (
           <section
             role="status"
