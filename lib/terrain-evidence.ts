@@ -22,6 +22,12 @@ const candidateSchema = z.object({
   source: z.string().min(1),
 });
 
+const featureValuesSchema = z.object({
+  medianSlopeDeg: z.number().min(0).max(90),
+  terrainRoughnessM: z.number().min(0),
+  relativeReliefM: z.number().min(0),
+});
+
 const evidenceSchema = z.object({
   operationalHypothesis: z.string().min(1, "An operational hypothesis is required."),
   limitations: z.array(z.string().min(1)).min(1, "A limitation statement is required."),
@@ -37,6 +43,8 @@ export const evidenceBackedRankingSchema = z.object({
   rank: z.number().int().positive(),
   dataCoverage: z.literal(1),
   sourceDatasetIds: z.array(z.string().min(1)).length(2),
+  generatedAt: z.iso.datetime({ offset: true }),
+  features: featureValuesSchema,
   candidate: candidateSchema,
   contributions: z.array(contributionSchema).length(3),
   evidence: evidenceSchema,
@@ -64,6 +72,10 @@ type ProductionScoreRow = {
   rank: number;
   data_coverage: number;
   source_dataset_ids: string[];
+  generated_at: string;
+  median_slope_deg: number;
+  terrain_roughness_m: number;
+  relative_relief_m: number;
   candidates: unknown;
 };
 
@@ -107,6 +119,12 @@ export function buildProductionCandidates(
     rank: score.rank,
     dataCoverage: score.data_coverage,
     sourceDatasetIds: score.source_dataset_ids,
+    generatedAt: score.generated_at,
+    features: {
+      medianSlopeDeg: score.median_slope_deg,
+      terrainRoughnessM: score.terrain_roughness_m,
+      relativeReliefM: score.relative_relief_m,
+    },
     candidate: score.candidates,
     contributions: (contributionsByCandidate.get(score.candidate_id) ?? []).map((item) => ({
       featureKey: item.feature_key,

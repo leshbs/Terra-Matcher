@@ -125,7 +125,8 @@ export async function GET(
           .from("candidate_scores")
           .select(`
             model_run_id, model_version, scenario_id, candidate_id,
-            similarity_score, rank, data_coverage, source_dataset_ids,
+            median_slope_deg, terrain_roughness_m, relative_relief_m,
+            similarity_score, rank, data_coverage, source_dataset_ids, generated_at,
             candidates (id, name, country, latitude, longitude, source)
           `)
           .eq("scenario_id", scenarioId)
@@ -146,14 +147,23 @@ export async function GET(
       }
 
       try {
-        const candidates = buildProductionCandidates(
+        const rankings = buildProductionCandidates(
           scoreResult.data ?? [],
           contributionResult.data ?? [],
           evidenceResult.data ?? [],
         );
-        if (candidates.length === 0 || candidates.length > MAX_RESULTS) {
+        if (rankings.length === 0 || rankings.length > MAX_RESULTS) {
           throw new Error("Invalid production candidate count.");
         }
+        const candidates = rankings.map(({ candidate, ...ranking }) => ({
+          id: candidate.id,
+          name: candidate.name,
+          country: candidate.country,
+          latitude: candidate.latitude,
+          longitude: candidate.longitude,
+          source: candidate.source,
+          ...ranking,
+        }));
 
         return jsonResponse({
           scenario: {
@@ -163,8 +173,8 @@ export async function GET(
             description: scenario.description,
           },
           dataMode: scenario.data_mode,
-          modelRunId: candidates[0].modelRunId,
-          modelVersion: candidates[0].modelVersion,
+          modelRunId: rankings[0].modelRunId,
+          modelVersion: rankings[0].modelVersion,
           limitations: ["Data-derived similarity, not mission-site approval."],
           candidates,
         });

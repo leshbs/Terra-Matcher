@@ -22,6 +22,12 @@ const validRanking = {
   rank: 1,
   dataCoverage: 1,
   sourceDatasetIds: ['earth-nasadem-hgt-v001', 'mars-mola-megdr-v2'],
+  generatedAt: '2026-11-15T00:00:00.000Z',
+  features: {
+    medianSlopeDeg: 7.047629740447329,
+    terrainRoughnessM: 124.72088621621855,
+    relativeReliefM: 492,
+  },
   candidate,
   contributions: [
     { featureKey: 'median_slope_deg', available: true, normalizedWeight: 0.35, weightedContribution: 0.0056 },
@@ -57,6 +63,10 @@ test('builds production candidates only when every score has evidence', () => {
       rank: validRanking.rank,
       data_coverage: validRanking.dataCoverage,
       source_dataset_ids: validRanking.sourceDatasetIds,
+      generated_at: validRanking.generatedAt,
+      median_slope_deg: validRanking.features.medianSlopeDeg,
+      terrain_roughness_m: validRanking.features.terrainRoughnessM,
+      relative_relief_m: validRanking.features.relativeReliefM,
       candidates: validRanking.candidate,
     }],
     validRanking.contributions.map((item) => ({
@@ -78,6 +88,7 @@ test('builds production candidates only when every score has evidence', () => {
   );
 
   assert.equal(candidates[0].evidence.operationalHypothesis, validRanking.evidence.operationalHypothesis);
+  assert.deepEqual(candidates[0].features, validRanking.features);
 });
 
 test('builds methodology only with both registered datasets', () => {
