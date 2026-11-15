@@ -13,10 +13,14 @@ interface Props {
   onClose: () => void;
   onShowWindow: () => void;
   onZoom: () => void;
+  expanded: boolean;
+  onToggleExpand: () => void;
 }
 
-export default function Inspector({ selection, windows, datasets, runId, layer, onClose, onShowWindow, onZoom }: Props) {
-  if (!selection) return null;
+export default function Inspector({ selection, windows, datasets, runId, layer, onClose, onShowWindow, onZoom, expanded, onToggleExpand }: Props) {
+  if (!selection) {
+    return <section className={`${s.insp} ${s.hint}`}>Klik kotak sampel atau penanda jendela untuk melihat nilai medan.</section>;
+  }
   const w = windows.find((x) => x.id === (selection.kind === "window" ? selection.id : selection.cell.wid));
   if (!w) return null;
   const d = datasets[w.datasetId];
@@ -28,7 +32,8 @@ export default function Inspector({ selection, windows, datasets, runId, layer, 
   const keys = Object.keys(LAYERS) as LayerKey[];
 
   return (
-    <section className={s.insp} aria-live="polite">
+    <section className={`${s.insp} ${expanded ? s.expanded : ""}`} aria-live="polite">
+      <button className={s.sheetToggle} onClick={onToggleExpand} aria-label={expanded ? "Ciutkan panel" : "Perluas panel"}>{expanded ? "▾" : "▴"}</button>
       <button className={s.x} aria-label="Tutup" onClick={onClose}>×</button>
       {selection.kind === "cell" ? (
         <>
@@ -43,7 +48,7 @@ export default function Inspector({ selection, windows, datasets, runId, layer, 
       ) : (
         <>
           <h3>{w.name}</h3>
-          <p className={s.sub}>Radius 20 km · {w.points.length} titik sampel</p>
+          <p className={s.sub}>Radius 20 km · {w.pointCount} titik sampel</p>
           <p>{w.rank ? <><b>Peringkat #{w.rank} dari 5</b> · skor kemiripan {fmt(w.score!)} · cakupan data {Math.round((w.coverage ?? 0) * 100)}%</> : <b>Skenario acuan Mars</b>}</p>
           <p>{w.hypothesis}</p>
           <div className={s.grid}>{keys.map((k) => tile(k, w.features[k]))}</div>

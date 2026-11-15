@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "modelRunId": "2026-11-14-mvp-v1",
+  "note": "Small web-demo assets derived from the validated package. No raw, interim or processed rasters.",
+  "layers": [
+    {
+      "id": "terrain-cells",
+      "title": "Terrain study points: median slope, roughness, relative relief",
+      "path": "/layers/terrain-cells.geojson",
+      "format": "geojson",
+      "geometry": "Polygon",
+      "cellSizeKm": 4,
+      "properties": [
+        {
+          "key": "slope",
+          "unit": "degrees",
+          "featureKey": "median_slope_deg"
+        },
+        {
+          "key": "rough",
+          "unit": "m",
+          "featureKey": "terrain_roughness_m"
+        },
+        {
+          "key": "relief",
+          "unit": "m",
+          "featureKey": "relative_relief_m"
+        }
+      ],
+      "analysisResolutionM": 500,
+      "localWindowKm": 3,
+      "datasetIds": [
+        "mars-mola-megdr-v2",
+        "earth-nasadem-hgt-v001"
+      ],
+      "derivedFrom": "study-population-features.json",
+      "bytes": 52541,
+      "sha256": "7f6ec19b7460db381d5dcacf333c0940c1563f6000c07c7613dc142a8bef87e1"
+    },
+    {
+      "id": "candidate-markers",
+      "title": "Window centres with rank and similarity score",
+      "path": "/layers/candidates.geojson",
+      "format": "geojson",
+      "geometry": "Point",
+      "derivedFrom": "candidates.geojson",
+      "bytes": 2484,
+      "sha256": "d3b824d2c55adf143e27b5ccd9259ea1d31a773ddbd78dc90b888f09f4193808"
+    }
+  ],
+  "attribution": [
+    "NASA PDS Geosciences Node: MOLA MEGDR v2 (CC0)",
+    "NASA EOSDIS LP DAAC: NASADEM HGT V001"
+  ],
+  "limitations": [
+    "Data-derived terrain similarity, not mission-site approval.",
+    "Study points are sampled on a 500 m analysis grid and drawn as 4 km squares."
+  ]
+}
