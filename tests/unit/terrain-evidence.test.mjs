@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { parseEvidenceBackedRanking } from '../../lib/terrain-evidence.ts';
+import { buildProductionCandidates, parseEvidenceBackedRanking } from '../../lib/terrain-evidence.ts';
 
 const candidate = {
   id: 'earth-mauna-kea-hawaii-v1',
@@ -43,4 +43,38 @@ test('rejects a production ranking without a limitation', () => {
   invalid.evidence.limitations = [];
 
   assert.throws(() => parseEvidenceBackedRanking(invalid), /limitation/i);
+});
+
+test('builds production candidates only when every score has evidence', () => {
+  const candidates = buildProductionCandidates(
+    [{
+      model_run_id: validRanking.modelRunId,
+      model_version: validRanking.modelVersion,
+      scenario_id: validRanking.scenarioId,
+      candidate_id: validRanking.candidateId,
+      similarity_score: validRanking.similarityScore,
+      rank: validRanking.rank,
+      data_coverage: validRanking.dataCoverage,
+      source_dataset_ids: validRanking.sourceDatasetIds,
+      candidates: validRanking.candidate,
+    }],
+    validRanking.contributions.map((item) => ({
+      model_run_id: validRanking.modelRunId,
+      scenario_id: validRanking.scenarioId,
+      candidate_id: validRanking.candidateId,
+      feature_key: item.featureKey,
+      available: item.available,
+      normalized_weight: item.normalizedWeight,
+      weighted_contribution: item.weightedContribution,
+    })),
+    [{
+      model_run_id: validRanking.modelRunId,
+      location_id: validRanking.candidateId,
+      operational_hypothesis: validRanking.evidence.operationalHypothesis,
+      limitations: validRanking.evidence.limitations,
+      source_dataset_ids: validRanking.evidence.sourceDatasetIds,
+    }],
+  );
+
+  assert.equal(candidates[0].evidence.operationalHypothesis, validRanking.evidence.operationalHypothesis);
 });

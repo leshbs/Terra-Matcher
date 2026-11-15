@@ -1,6 +1,7 @@
 import { connection, NextResponse } from "next/server";
 import { z } from "zod";
 import { createPublicSupabaseClient } from "@/lib/supabase/public";
+import { buildProductionCandidates } from "@/lib/terrain-evidence";
 
 // Explicit fixture selection. Never use this run for production data.
 const FIXTURE_SCENARIO_ID = "mars-reference-fixture-v1";
@@ -117,6 +118,61 @@ export async function GET(
     }
 
     const scenario = scenarioParsed.data;
+
+    if (scenario.data_mode === "production") {
+      const [scoreResult, contributionResult, evidenceResult] = await Promise.all([
+        supabase
+          .from("candidate_scores")
+          .select(`
+            model_run_id, model_version, scenario_id, candidate_id,
+            similarity_score, rank, data_coverage, source_dataset_ids,
+            candidates (id, name, country, latitude, longitude, source)
+          `)
+          .eq("scenario_id", scenarioId)
+          .order("rank", { ascending: true })
+          .limit(MAX_RESULTS + 1),
+        supabase
+          .from("ranking_contributions")
+          .select("model_run_id, scenario_id, candidate_id, feature_key, available, normalized_weight, weighted_contribution")
+          .eq("scenario_id", scenarioId),
+        supabase
+          .from("location_evidence")
+          .select("model_run_id, location_id, operational_hypothesis, limitations, source_dataset_ids"),
+      ]);
+
+      if (scoreResult.error || contributionResult.error || evidenceResult.error) {
+        console.error("[api/scenario-candidates] Production provenance query failed.");
+        return errorResponse(503, "CANDIDATES_UNAVAILABLE", "Candidate evidence is temporarily unavailable.");
+      }
+
+      try {
+        const candidates = buildProductionCandidates(
+          scoreResult.data ?? [],
+          contributionResult.data ?? [],
+          evidenceResult.data ?? [],
+        );
+        if (candidates.length === 0 || candidates.length > MAX_RESULTS) {
+          throw new Error("Invalid production candidate count.");
+        }
+
+        return jsonResponse({
+          scenario: {
+            id: scenario.id,
+            name: scenario.name,
+            body: scenario.body,
+            description: scenario.description,
+          },
+          dataMode: scenario.data_mode,
+          modelRunId: candidates[0].modelRunId,
+          modelVersion: candidates[0].modelVersion,
+          limitations: ["Data-derived similarity, not mission-site approval."],
+          candidates,
+        });
+      } catch {
+        console.error("[api/scenario-candidates] Production evidence validation failed.");
+        return errorResponse(503, "INVALID_PROVENANCE", "Candidate evidence is incomplete; no similarity result is shown.");
+      }
+    }
 
     if (
       scenario.id !== FIXTURE_SCENARIO_ID ||
