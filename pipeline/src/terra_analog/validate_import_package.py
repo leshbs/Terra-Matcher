@@ -60,6 +60,90 @@ def unique_index(rows: list, fields: tuple[str, ...]) -> dict:
     return result
 
 
+def validate_study_population(
+    document: dict[str, Any],
+    locations: dict,
+    transforms: dict,
+) -> None:
+    """Check internal sample consistency, not raster extraction correctness."""
+    rows = document["features"]
+    index = unique_index(rows, ("locationId", "featureKey"))
+    require(len(index) == 450, "Study population: expected 450 records")
+
+    samples_by_parent = {parent: set() for parent in locations}
+    values_by_transform = {key: [] for key in transforms}
+    sources_by_transform = {key: set() for key in transforms}
+    sample_parents = {}
+
+    for (sample_id, key), row in index.items():
+        parent_id = row["parentLocationId"]
+        require(parent_id in locations, "Study population: unknown parent")
+        require(key in WEIGHTS, "Study population: unexpected feature key")
+        require(
+            isinstance(sample_id, str) and bool(sample_id),
+            "Study population: invalid sample ID",
+        )
+        require(
+            row["studyPopulationId"] == sample_id,
+            "Study population: sample identity mismatch",
+        )
+        require(
+            sample_id not in sample_parents
+            or sample_parents[sample_id] == parent_id,
+            "Study population: sample assigned to multiple parents",
+        )
+        sample_parents[sample_id] = parent_id
+        samples_by_parent[parent_id].add(sample_id)
+
+        raw = number(row["rawValue"])
+        require(raw >= 0, "Study population: negative raw value")
+        if key == "median_slope_deg":
+            require(raw <= 90, "Study population: slope exceeds 90 degrees")
+        require(
+            row["qualityFlag"] == "source-backed-derived",
+            "Study population: unsupported quality flag for this MVP",
+        )
+        close(row["coverage"], 1, "Study population: extraction coverage")
+        close(row["analysisResolutionM"], 500, "Study population: resolution")
+        close(row["localWindowKm"], 3, "Study population: local window")
+
+        source_id = row["sourceDatasetId"]
+        require(
+            isinstance(source_id, str) and bool(source_id),
+            "Study population: invalid source dataset ID",
+        )
+        body = locations[parent_id]["body"]
+        transform_id = f"{body}:{key}"
+        values_by_transform[transform_id].append(raw)
+        sources_by_transform[transform_id].add(source_id)
+
+    require(
+        all(len(samples) == 25 for samples in samples_by_parent.values()),
+        "Study population: expected 25 samples per parent",
+    )
+    require(
+        set(index) == {
+            (sample_id, key)
+            for samples in samples_by_parent.values()
+            for sample_id in samples
+            for key in WEIGHTS
+        },
+        "Study population: expected three features per sample",
+    )
+
+    for transform_id, transform in transforms.items():
+        require(
+            sorted(values_by_transform[transform_id])
+            == transform["sortedRawValues"],
+            f"{transform_id}: study population differs from manifest samples",
+        )
+        require(
+            sorted(sources_by_transform[transform_id])
+            == transform["sourceDatasetIds"],
+            f"{transform_id}: study population source IDs differ from manifest",
+        )
+
+
 def validate_package(root: Path) -> dict[str, Any]:
     """Fail on the first core error; keep missing enrichment as a warning."""
     documents = {}
@@ -140,6 +224,10 @@ def validate_package(root: Path) -> dict[str, Any]:
         close(transform["analysisResolutionM"], 500, transform_id)
         close(transform["localWindowKm"], 3, transform_id)
 
+    validate_study_population(
+        documents["study-population-features.json"], locations, transforms
+    )
+
     feature_rows = documents["location-features.json"]["features"]
     features = unique_index(feature_rows, ("locationId", "featureKey"))
     require(
@@ -203,6 +291,17 @@ def validate_package(root: Path) -> dict[str, Any]:
         )
         close(ranking["similarityScore"], round(score, 6), f"{candidate_id}: score")
         close(ranking["dataCoverage"], coverage, f"{candidate_id}: weight coverage")
+        properties = locations[candidate_id]
+        for field in ("similarityScore", "dataCoverage"):
+            require(
+                field in properties,
+                f"{candidate_id}: GeoJSON missing {field}",
+            )
+            close(
+                properties[field],
+                number(ranking[field]),
+                f"{candidate_id}: GeoJSON {field}",
+            )
         for expected in computed:
             key = expected["featureKey"]
             actual = contributions[(candidate_id, key)]
@@ -233,6 +332,11 @@ def validate_package(root: Path) -> dict[str, Any]:
             type(declared_rank) is int and declared_rank == rank,
             f"{candidate_id}: incorrect rank",
         )
+        geojson_rank = locations[candidate_id].get("rank")
+        require(
+            type(geojson_rank) is int and geojson_rank == declared_rank,
+            f"{candidate_id}: incorrect GeoJSON rank",
+        )
 
     warnings = []
     if missing_normalized:
@@ -248,9 +352,9 @@ def validate_package(root: Path) -> dict[str, Any]:
         "notVerified": [
             "Raw raster integrity or extraction correctness.",
             "Official handoff, execution commit, model version or generation time.",
-            "Study-population records against manifest sample values.",
             "Detailed evidence, source provenance and processing-report contents.",
-            "GeoJSON score/rank properties against ranking records.",
+            "GeoJSON strongest/largest match properties against evidence.",
+            "Study-grid offsets, sample positions or detailed extraction methods.",
             "Scientific validity or operational suitability of locations.",
         ],
         "fileSha256": hashes,
