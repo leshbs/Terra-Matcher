@@ -1,4 +1,5 @@
 import unittest
+import json
 from pathlib import Path
 
 import numpy as np
@@ -105,6 +106,17 @@ class TerrainFeatureTests(unittest.TestCase):
                 for record in records
             )
         )
+
+    def test_source_checksum_inventory_has_file_level_provenance(self):
+        build_location_features(Path("data/training"))
+        inventory = json.loads(Path("data/training/raw/source-checksums.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(inventory["modelRunId"], "2026-11-14-mvp-v1")
+        self.assertEqual(len(inventory["files"]), 9)
+        self.assertTrue(all(record["sha256"] for record in inventory["files"]))
+        self.assertTrue(all(record["sourceUrl"] for record in inventory["files"]))
+        self.assertTrue(all("localObservedAt" in record for record in inventory["files"]))
+        self.assertTrue(all(record["datasetId"] for record in inventory["files"]))
 
 
 if __name__ == "__main__":

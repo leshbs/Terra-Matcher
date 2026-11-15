@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import RankingDashboard from "@/components/comparison/ranking-dashboard";
 import {
-  comparisonFixture,
-  getRankedCandidates,
+  getComparisonBundle,
+  getRankedCandidatesFromDataset,
 } from "@/components/comparison/data";
 import {
   FEATURE_KEYS,
@@ -11,8 +11,10 @@ import {
   type FeatureKey,
 } from "@/components/comparison/contracts";
 import {
-  FixtureNotice,
+  DataModeNotice,
+  DataSourceBadge,
   MandatoryDisclaimer,
+  SourceWarnings,
 } from "@/components/comparison/notices";
 
 export const metadata: Metadata = {
@@ -21,18 +23,23 @@ export const metadata: Metadata = {
     "Ranked Earth candidate hypotheses for the Gale Crater reference window. Data-derived terrain similarity, not mission-site approval.",
 };
 
-export default function CompareIndexPage() {
-  const candidates = getRankedCandidates(comparisonFixture.scenario.id);
+export default async function CompareIndexPage() {
+  const bundle = await getComparisonBundle();
+  const { dataset, source, warnings } = bundle;
+  const candidates = getRankedCandidatesFromDataset(
+    dataset,
+    dataset.scenario.id,
+  );
 
   if (!candidates) {
-    throw new Error("Comparison fixture scenario is unavailable.");
+    throw new Error("Comparison dataset scenario is unavailable.");
   }
 
   const datasetById = Object.fromEntries(
-    comparisonFixture.datasets.map((dataset) => [dataset.id, dataset]),
+    dataset.datasets.map((record) => [record.id, record]),
   );
   const referenceDataset =
-    datasetById[comparisonFixture.scenario.features.median_slope_deg.sourceDatasetId];
+    datasetById[dataset.scenario.features.median_slope_deg.sourceDatasetId];
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 font-sans text-slate-100 sm:px-6 sm:py-10 lg:px-8">
@@ -41,17 +48,23 @@ export default function CompareIndexPage() {
           aria-label="Breadcrumb"
           className="flex flex-wrap items-center gap-2 text-sm text-slate-400"
         >
-          <span className="font-medium text-cyan-300">
-            Terra Analog Mission Control
-          </span>
+          <Link
+  href="/"
+  className="font-medium text-cyan-300 hover:text-cyan-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+>
+  Back to main dashboard
+</Link>
           <span aria-hidden="true">/</span>
           <span className="text-slate-200">Ranking dashboard</span>
         </nav>
 
         <header className="space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
-            Comparison &amp; ranking · Day 1 fixture
-          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+              Comparison &amp; ranking · Day 2
+            </p>
+            <DataSourceBadge source={source} />
+          </div>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-5xl">
@@ -64,7 +77,7 @@ export default function CompareIndexPage() {
               </p>
             </div>
             <Link
-              href={`/compare/${comparisonFixture.scenario.id}/${candidates[0].id}`}
+              href={`/compare/${dataset.scenario.id}/${candidates[0].id}`}
               prefetch
               className="rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
             >
@@ -81,31 +94,23 @@ export default function CompareIndexPage() {
                 Mars reference
               </span>
               <span className="rounded-full border border-slate-700 px-2.5 py-1 text-[11px] text-slate-400">
-                {comparisonFixture.scenario.radiusKm} km window
+                {dataset.scenario.radiusKm} km window
               </span>
               <span className="rounded-full border border-slate-700 px-2.5 py-1 text-[11px] text-slate-400">
                 {referenceDataset?.provider ?? "Source pending"}
               </span>
             </div>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white">
-              {comparisonFixture.scenario.name}
+              {dataset.scenario.name}
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              {comparisonFixture.scenario.summary}
+              {dataset.scenario.summary}
             </p>
             <p className="mt-2 font-mono text-xs text-slate-500">
-              {formatCoordinate(
-                comparisonFixture.scenario.center.latitude,
-                "lat",
-              )}{" "}
-              ·{" "}
-              {formatCoordinate(
-                comparisonFixture.scenario.center.longitude,
-                "lon",
-              )}{" "}
-              · MOLA reference ·{" "}
-              {comparisonFixture.scenario.features.median_slope_deg.analysisResolutionM}{" "}
-              m source resolution
+              {formatCoordinate(dataset.scenario.center.latitude, "lat")} ·{" "}
+              {formatCoordinate(dataset.scenario.center.longitude, "lon")} · MOLA reference ·{" "}
+              {dataset.scenario.features.median_slope_deg.analysisResolutionM} m source resolution
+            
             </p>
           </div>
           <dl className="grid grid-cols-3 gap-2 text-center">
@@ -136,12 +141,14 @@ export default function CompareIndexPage() {
           </dl>
         </section>
 
-        <FixtureNotice model={comparisonFixture.model} />
+        <DataModeNotice dataset={dataset} source={source} />
+        <SourceWarnings warnings={warnings} />
 
         <RankingDashboard
-          scenario={comparisonFixture.scenario}
+          scenario={dataset.scenario}
           candidates={candidates}
-          featureDefinitions={comparisonFixture.featureDefinitions}
+          featureDefinitions={dataset.featureDefinitions}
+          showFilters
         />
 
         <section
@@ -175,7 +182,7 @@ export default function CompareIndexPage() {
           </div>
           <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
             {FEATURE_KEYS.map((key: FeatureKey) => {
-              const definition = comparisonFixture.featureDefinitions[key];
+              const definition = dataset.featureDefinitions[key];
 
               return (
                 <div
@@ -204,8 +211,7 @@ export default function CompareIndexPage() {
             Terrain-feature comparison only. Not a landing-site recommendation.
           </p>
           <p className="font-mono text-xs">
-            {comparisonFixture.model.modelRunId} ·{" "}
-            {comparisonFixture.model.modelVersion}
+            {dataset.model.modelRunId} · {dataset.model.modelVersion}
           </p>
         </footer>
       </div>

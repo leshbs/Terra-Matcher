@@ -183,22 +183,22 @@ Fokus: memastikan proyek memenangkan Validity, Relevance, dan Impact, bukan hany
 
 ### Hari 1
 
-- [ ] Menulis copy landing page: masalah, solusi, cara kerja, dan impact.
-- [ ] Menulis deskripsi Mars scenario.
-- [ ] Menulis operational hypothesis untuk tiap kandidat Bumi.
-- [ ] Menulis limitation statement untuk setiap kandidat.
-- [ ] Menulis disclaimer ilmiah utama.
-- [ ] Memverifikasi sitasi dan metadata dataset dari anggota data.
-- [ ] Membuat demo script kasar 90 detik.
+- [x] Menulis copy landing page: masalah, solusi, cara kerja, dan impact.
+- [x] Menulis deskripsi Mars scenario.
+- [x] Menulis operational hypothesis untuk tiap kandidat Bumi.
+- [x] Menulis limitation statement untuk setiap kandidat.
+- [x] Menulis disclaimer ilmiah utama.
+- [x] Memverifikasi sitasi dan metadata dataset dari anggota data.
+- [x] Membuat demo script kasar 90 detik.
 
 ### Hari 2
 
-- [ ] Membuat halaman methodology/provenance.
-- [ ] Memastikan setiap skor memiliki sumber dan caveat.
-- [ ] Memeriksa klaim berlebihan seperti “best landing site”, “proven analog”, atau “AI discovery”.
-- [ ] Menjalankan checklist rubrik NASA Space Apps.
-- [ ] Menguji alur pengguna dari landing page sampai comparison.
-- [ ] Menulis README/submission description.
+- [x] Membuat halaman methodology/provenance.
+- [x] Memastikan setiap skor memiliki sumber dan caveat.
+- [x] Memeriksa klaim berlebihan seperti “best landing site”, “proven analog”, atau “AI discovery”.
+- [x] Menjalankan checklist rubrik NASA Space Apps.
+- [x] Menguji alur pengguna dari landing page sampai comparison.
+- [x] Menulis README/submission description.
 - [ ] Memimpin rehearsal demo dan mencatat bug prioritas.
 
 Output wajib:

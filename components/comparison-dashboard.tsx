@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
@@ -28,8 +29,22 @@ const candidateSchema = z.object({
     terrainRoughnessM: z.number().min(0),
     relativeReliefM: z.number().min(0),
   }),
-  similarityScore: z.number().min(0).max(1),
+  similarityScore: z.number().min(0).max(100),
   generatedAt: z.iso.datetime({ offset: true }),
+  rank: z.number().int().positive().optional(),
+  dataCoverage: z.number().min(0).max(1).optional(),
+  sourceDatasetIds: z.array(z.string().min(1)).length(2).optional(),
+  contributions: z.array(z.object({
+    featureKey: z.enum(["median_slope_deg", "terrain_roughness_m", "relative_relief_m"]),
+    available: z.literal(true),
+    normalizedWeight: z.number().positive(),
+    weightedContribution: z.number().min(0),
+  })).length(3).optional(),
+  evidence: z.object({
+    operationalHypothesis: z.string().min(1),
+    limitations: z.array(z.string().min(1)).min(1),
+    sourceDatasetIds: z.array(z.string().min(1)).length(2),
+  }).optional(),
 }).refine(
   (candidate) =>
     (candidate.latitude === null) === (candidate.longitude === null),
@@ -158,7 +173,56 @@ export default function ComparisonDashboard() {
             reference scenario. Scores are not probabilities or landing-site
             recommendations.
           </p>
+          <div className="space-y-2 pt-2">
+  <Link
+    href="/compare"
+    className="inline-flex rounded-lg bg-cyan-300 px-4 py-2 font-semibold text-slate-950 hover:bg-cyan-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+  >
+    Open comparison demo
+  </Link>
+  <p className="text-sm text-slate-400">
+    Separate synthetic UI fixture with its own scenario, candidates, and scores.
+    Not a detailed view of the API ranking below.
+  </p>
+</div>
         </header>
+
+        <section className="grid gap-4 md:grid-cols-3" aria-label="Project story">
+          <article className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+            <h2 className="text-xl font-semibold">Mission rehearsal starts on Earth</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Planetary datasets can describe terrain, but they do not by
+              themselves show how an Earth landscape might support a focused
+              exploration question. This tool makes that comparison inspectable.
+            </p>
+          </article>
+          <article className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+            <h2 className="text-xl font-semibold">From Mars data to Earth-tested questions</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              The featured scenario is a 20 km Gale Crater / Aeolis Palus
+              terrain window. Earth candidates are ranked from median slope,
+              terrain roughness, and relative relief at a declared scale.
+            </p>
+          </article>
+          <article className="rounded-2xl border border-cyan-900 bg-slate-900 p-6">
+            <h2 className="text-xl font-semibold text-cyan-100">The similarity score is not the answer</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              A score is only a traceable terrain comparison. Open a candidate
+              to inspect its feature contributions, operational hypothesis,
+              data sources, and limitations before drawing conclusions.
+            </p>
+          </article>
+        </section>
+
+        <section className="rounded-2xl border border-amber-700 bg-amber-950 p-6 text-amber-100">
+          <h2 className="text-xl font-semibold">Scientific boundary</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-6">
+            These are candidate hypotheses for further study, not proven analogs
+            or mission-site recommendations. The MVP does not model gravity,
+            atmosphere, radiation, temperature regimes, biological activity,
+            access, safety, regulation, or land permissions.
+          </p>
+        </section>
 
         {current.status === "loading" && (
           <section
@@ -241,8 +305,9 @@ export default function ComparisonDashboard() {
               <section className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
                 <h2 className="text-xl font-semibold">Candidate ranking</h2>
                 <p className="mt-2 text-sm text-slate-400">
-                  Similarity scale: 0–1, not a probability. Select a candidate
-                  to inspect its terrain features.
+                  {current.result.dataMode === "production"
+                    ? "Similarity scale: 0–100. It expresses only terrain-feature similarity, not a probability or approval."
+                    : "Similarity scale: 0–1, not a probability. Select a candidate to inspect its terrain features."}
                 </p>
                 {current.result.candidates.length === 0 ? (
                   <p className="mt-6" role="status">No candidates are available.</p>
@@ -262,7 +327,7 @@ export default function ComparisonDashboard() {
                         >
                           <span>
                             <span className="block font-semibold">
-                              {index + 1}. {candidate.name}
+                              {candidate.rank ?? index + 1}. {candidate.name}
                             </span>
                             <span className="text-sm text-slate-400">
                               {candidate.country ?? "Country not supplied"}
@@ -270,6 +335,7 @@ export default function ComparisonDashboard() {
                           </span>
                           <span className="font-mono text-xl text-cyan-300">
                             {candidate.similarityScore.toFixed(2)}
+                            {current.result.dataMode === "production" ? " / 100" : ""}
                           </span>
                         </button>
                       </li>
@@ -310,6 +376,42 @@ export default function ComparisonDashboard() {
                         Generated at (UTC): {selectedCandidate.generatedAt}
                       </p>
                     </div>
+                    {selectedCandidate.evidence && selectedCandidate.contributions && (
+                      <section className="space-y-4 rounded-xl border border-cyan-900 bg-slate-950 p-4 text-sm">
+                        <h4 className="font-semibold text-cyan-100">Evidence &amp; caveats</h4>
+                        <p className="text-slate-300">
+                          <span className="font-medium text-slate-100">Operational hypothesis: </span>
+                          {selectedCandidate.evidence.operationalHypothesis}
+                        </p>
+                        {selectedCandidate.dataCoverage !== undefined && (
+                          <p className="text-slate-300">
+                            <span className="font-medium text-slate-100">Data coverage: </span>
+                            {(selectedCandidate.dataCoverage * 100).toFixed(0)}%
+                          </p>
+                        )}
+                        <div>
+                          <p className="font-medium text-slate-100">Feature contributions</p>
+                          <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-300">
+                            {selectedCandidate.contributions.map((contribution) => (
+                              <li key={contribution.featureKey}>
+                                {contribution.featureKey.replaceAll("_", " ")}: weight {contribution.normalizedWeight.toFixed(2)}, contribution {contribution.weightedContribution.toFixed(4)}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-100">Candidate limitations</p>
+                          <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-300">
+                            {selectedCandidate.evidence.limitations.map((limitation) => (
+                              <li key={limitation}>{limitation}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <p className="break-words text-slate-400">
+                          Source dataset IDs: {selectedCandidate.evidence.sourceDatasetIds.join(", ")}
+                        </p>
+                      </section>
+                    )}
                   </div>
                 ) : (
                   <p className="mt-6 text-slate-300">No candidate detail to display.</p>

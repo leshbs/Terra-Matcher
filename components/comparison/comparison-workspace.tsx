@@ -1,5 +1,5 @@
 import Link from "next/link";
-import ContributionChart from "./contribution-chart";
+import ComparisonExplainability from "./comparison-explainability";
 import FeatureComparison from "./feature-comparison";
 import RankingDashboard from "./ranking-dashboard";
 import {
@@ -12,38 +12,51 @@ import {
   getScoreBand,
   getStrongestMatch,
   type ComparisonCandidate,
-  type ComparisonFixture,
+  type ComparisonDataSourceInfo,
+  type ComparisonDataset,
 } from "./contracts";
-import { FixtureNotice, MandatoryDisclaimer } from "./notices";
+import {
+  DataModeNotice,
+  DataSourceBadge,
+  MandatoryDisclaimer,
+  SourceWarnings,
+} from "./notices";
 
 type ComparisonWorkspaceProps = {
-  fixture: ComparisonFixture;
+  dataset: ComparisonDataset;
   candidate: ComparisonCandidate;
   candidates: ComparisonCandidate[];
+  source?: ComparisonDataSourceInfo;
+  warnings?: string[];
 };
 
-function datasetIdsForComparison(fixture: ComparisonFixture, candidate: ComparisonCandidate) {
+function datasetIdsForComparison(
+  dataset: ComparisonDataset,
+  candidate: ComparisonCandidate,
+) {
   return Array.from(
     new Set([
-      ...fixture.scenario.sourceDatasetIds,
+      ...dataset.scenario.sourceDatasetIds,
       ...candidate.sourceDatasetIds,
     ]),
   ).filter((datasetId) => datasetId !== "fixture-comparison-ui-v1");
 }
 
 export default function ComparisonWorkspace({
-  fixture,
+  dataset,
   candidate,
   candidates,
+  source,
+  warnings = [],
 }: ComparisonWorkspaceProps) {
   const band = getScoreBand(candidate.similarityScore);
   const bandStyle = SCORE_BAND_STYLES[band];
   const strongestMatch = getStrongestMatch(candidate);
   const largestMismatch = getLargestMismatch(candidate);
   const datasetsById = Object.fromEntries(
-    fixture.datasets.map((dataset) => [dataset.id, dataset]),
+    dataset.datasets.map((record) => [record.id, record]),
   );
-  const evidenceDatasets = datasetIdsForComparison(fixture, candidate).map(
+  const evidenceDatasets = datasetIdsForComparison(dataset, candidate).map(
     (datasetId) => datasetsById[datasetId],
   );
   const selectedRank =
@@ -82,6 +95,7 @@ export default function ComparisonWorkspace({
                   Partial profile
                 </span>
               )}
+              {source && <DataSourceBadge source={source} />}
             </div>
 
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
@@ -106,11 +120,11 @@ export default function ComparisonWorkspace({
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
               Compared with{" "}
               <span className="font-medium text-slate-200">
-                {fixture.scenario.name}
+                {dataset.scenario.name}
               </span>{" "}
-              ({fixture.scenario.radiusKm} km reference window, centred at{" "}
-              {formatCoordinate(fixture.scenario.center.latitude, "lat")},{" "}
-              {formatCoordinate(fixture.scenario.center.longitude, "lon")}).
+              ({dataset.scenario.radiusKm} km reference window, centred at{" "}
+              {formatCoordinate(dataset.scenario.center.latitude, "lat")},{" "}
+              {formatCoordinate(dataset.scenario.center.longitude, "lon")}).
             </p>
           </div>
 
@@ -169,7 +183,7 @@ export default function ComparisonWorkspace({
             </p>
             <p className="mt-1 text-sm font-semibold text-emerald-200">
               {strongestMatch
-                ? fixture.featureDefinitions[strongestMatch.featureKey].label
+                ? dataset.featureDefinitions[strongestMatch.featureKey].label
                 : "Not available"}
             </p>
             <p className="mt-1 text-xs text-slate-400">
@@ -184,7 +198,7 @@ export default function ComparisonWorkspace({
             </p>
             <p className="mt-1 text-sm font-semibold text-rose-200">
               {largestMismatch
-                ? fixture.featureDefinitions[largestMismatch.featureKey].label
+                ? dataset.featureDefinitions[largestMismatch.featureKey].label
                 : "Not available"}
             </p>
             <p className="mt-1 text-xs text-slate-400">
@@ -204,21 +218,43 @@ export default function ComparisonWorkspace({
         </div>
       </header>
 
-      <FixtureNotice model={fixture.model} />
+      <DataModeNotice dataset={dataset} source={source} />
+      <SourceWarnings warnings={warnings} />
+
+      {candidate.profileStatus === "partial" && (
+        <section
+          aria-labelledby="partial-profile-heading"
+          className="rounded-2xl border border-amber-400/35 bg-amber-400/[0.07] p-4 text-sm text-amber-50 sm:p-5"
+        >
+          <h2
+            id="partial-profile-heading"
+            className="text-sm font-semibold text-amber-100"
+          >
+            Partial data profile
+          </h2>
+          <p className="mt-2 max-w-3xl text-amber-50/80">
+            Coverage is {formatCoverage(candidate.dataCoverage)}. Missing
+            features are excluded and the remaining weights are renormalised.
+            Do not compare this score directly with complete-profile
+            candidates.
+          </p>
+        </section>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
           <FeatureComparison
-            reference={fixture.scenario}
+            reference={dataset.scenario}
             candidate={candidate}
-            featureDefinitions={fixture.featureDefinitions}
+            featureDefinitions={dataset.featureDefinitions}
             datasetsById={datasetsById}
+            dataMode={dataset.dataMode}
           />
 
-          <ContributionChart
-            candidateName={candidate.name}
-            contributions={candidate.contributions}
-            featureDefinitions={fixture.featureDefinitions}
+          <ComparisonExplainability
+            candidate={candidate}
+            featureDefinitions={dataset.featureDefinitions}
+            modelWeights={dataset.model.weights}
           />
         </div>
 
@@ -343,7 +379,7 @@ export default function ComparisonWorkspace({
                 View full ranking
               </Link>
               <Link
-                href={`/compare/${fixture.scenario.id}/${
+                href={`/compare/${dataset.scenario.id}/${
                   candidates[(selectedRank % candidates.length) % candidates.length]
                     ?.id ?? candidate.id
                 }`}
@@ -373,13 +409,15 @@ export default function ComparisonWorkspace({
               Model run and source evidence
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              Source links identify the intended DEM products for the final
-              model run. This fixture is synthetic; replace it with validated
-              pipeline output before presenting scientific conclusions.
+              Source links identify the intended DEM products for the model
+              run.{" "}
+              {dataset.dataMode === "fixture"
+                ? "This dataset is a synthetic fixture; replace it with validated pipeline output before presenting scientific conclusions."
+                : "Review citations and limitations before interpreting similarity as operational suitability."}
             </p>
           </div>
           <code className="rounded-lg border border-slate-700 bg-slate-950/70 px-3 py-2 text-xs text-slate-300">
-            {fixture.model.modelRunId}
+            {dataset.model.modelRunId}
           </code>
         </div>
 
@@ -389,7 +427,7 @@ export default function ComparisonWorkspace({
               Model version
             </dt>
             <dd className="mt-1 font-mono text-slate-200">
-              {fixture.model.modelVersion}
+              {dataset.model.modelVersion}
             </dd>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
@@ -397,7 +435,7 @@ export default function ComparisonWorkspace({
               Transform
             </dt>
             <dd className="mt-1 font-mono text-slate-200">
-              {fixture.model.transformationVersion}
+              {dataset.model.transformationVersion}
             </dd>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
@@ -405,7 +443,7 @@ export default function ComparisonWorkspace({
               Generated at
             </dt>
             <dd className="mt-1 font-mono text-slate-200">
-              {fixture.model.generatedAt}
+              {dataset.model.generatedAt}
             </dd>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
@@ -413,7 +451,7 @@ export default function ComparisonWorkspace({
               Feature weights
             </dt>
             <dd className="mt-1 font-mono text-slate-200">
-              {Object.values(fixture.featureDefinitions)
+              {Object.values(dataset.featureDefinitions)
                 .map((definition) => `${Math.round(definition.weight * 100)}%`)
                 .join(" / ")}
             </dd>
@@ -462,7 +500,7 @@ export default function ComparisonWorkspace({
             Global limitations
           </h3>
           <ul className="mt-2 grid gap-2 text-xs leading-5 text-slate-400 lg:grid-cols-2">
-            {fixture.globalLimitations.map((limitation) => (
+            {dataset.globalLimitations.map((limitation) => (
               <li key={limitation} className="flex gap-2">
                 <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-500" />
                 <span>{limitation}</span>
@@ -477,9 +515,9 @@ export default function ComparisonWorkspace({
       </section>
 
       <RankingDashboard
-        scenario={fixture.scenario}
+        scenario={dataset.scenario}
         candidates={candidates}
-        featureDefinitions={fixture.featureDefinitions}
+        featureDefinitions={dataset.featureDefinitions}
         activeCandidateId={candidate.id}
       />
     </div>

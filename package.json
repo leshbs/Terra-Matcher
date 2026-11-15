@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "validate:production-evidence": "node --test pipeline/tests/production-evidence.test.mjs",
+    "validate:scientific-claims": "node scripts/scan-scientific-claims.mjs ."
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
