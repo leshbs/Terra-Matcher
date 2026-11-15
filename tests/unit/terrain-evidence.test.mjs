@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { buildProductionCandidates, parseEvidenceBackedRanking } from '../../lib/terrain-evidence.ts';
+import { buildMethodologyResponse } from '../../lib/methodology.ts';
 
 const candidate = {
   id: 'earth-mauna-kea-hawaii-v1',
@@ -77,4 +78,23 @@ test('builds production candidates only when every score has evidence', () => {
   );
 
   assert.equal(candidates[0].evidence.operationalHypothesis, validRanking.evidence.operationalHypothesis);
+});
+
+test('builds methodology only with both registered datasets', () => {
+  const result = buildMethodologyResponse(
+    {
+      id: '2026-11-14-mvp-v1',
+      analysis_resolution_m: 500,
+      local_window_km: 3,
+      transformation_version: 'ecdf-midrank-v1',
+      input_dataset_ids: ['earth-nasadem-hgt-v001', 'mars-mola-megdr-v2'],
+    },
+    [
+      { id: 'earth-nasadem-hgt-v001', provider: 'NASA EOSDIS', product: 'NASADEM', version: 'V001', url: 'https://example.com', access_url: 'https://example.com/data', native_resolution: { value: 1 }, unit: 'm', citation: 'Citation', limitations: ['Datum differs.'] },
+      { id: 'mars-mola-megdr-v2', provider: 'NASA PDS', product: 'MOLA', version: '2.0', url: 'https://example.com', access_url: 'https://example.com/data', native_resolution: { value: 128 }, unit: 'm', citation: 'Citation', limitations: ['Interpolation exists.'] },
+    ],
+  );
+
+  assert.equal(result.datasets.length, 2);
+  assert.equal(result.modelRun.analysisResolutionM, 500);
 });
