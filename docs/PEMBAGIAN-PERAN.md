@@ -189,7 +189,7 @@ Fokus: memastikan proyek memenangkan Validity, Relevance, dan Impact, bukan hany
 - [x] Menulis limitation statement untuk setiap kandidat.
 - [x] Menulis disclaimer ilmiah utama.
 - [x] Memverifikasi sitasi dan metadata dataset dari anggota data.
-- [ ] Membuat demo script kasar 90 detik.
+- [x] Membuat demo script kasar 90 detik.
 
 ### Hari 2
 

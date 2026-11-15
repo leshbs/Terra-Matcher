@@ -41,7 +41,7 @@ Install dependencies and configure public Supabase values:
 ```powershell
 npm ci
 $env:NEXT_PUBLIC_SUPABASE_URL = 'https://your-project.supabase.co'
-$env:NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'your-anon-key'
+$env:NEXT_PUBLIC_SUPABASE_ANON_KEY = 'your-anon-key'
 ```
 
 Apply the Supabase schema migrations in their existing numeric order, then seed fixtures and the production package:
