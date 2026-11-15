@@ -26,8 +26,9 @@ Dokumen ini bukan persetujuan publikasi dan tidak menjalankan impor.
 - Dashboard otomatis memilih skenario pertama.
 - API kandidat hanya mendukung skenario, run, dan versi model fixture.
 - Run pipeline belum didukung oleh API kandidat.
-- RLS aktif, tetapi kebijakan SELECT anon saat ini mengizinkan semua
-  baris pada scenarios, candidates, dan candidate_scores.
+- Migrasi repo mengaktifkan RLS dan mendefinisikan kebijakan SELECT anon
+  yang mengizinkan semua baris pada scenarios, candidates, dan candidate_scores.
+  Kebijakan pada Supabase terpasang belum diperiksa.
 - Filter API saja tidak cukup untuk melindungi data draft dari akses
   langsung melalui Supabase.
 
