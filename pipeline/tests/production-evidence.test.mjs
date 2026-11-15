@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 
+import { buildProductionSeed } from '../../scripts/build-production-seed.mjs';
 import { validateProductionEvidence } from '../../scripts/validate-production-evidence.mjs';
 
 const trainingRoot = new URL('../../data/training/', import.meta.url);
@@ -64,4 +67,20 @@ test('rejects a candidate without a limitation statement', async () => {
     () => validateProductionEvidence(input),
     /limitation/,
   );
+});
+
+test('builds a compact production seed without raw-data references', async () => {
+  const outputPath = join(await mkdtemp(join(tmpdir(), 'terra-seed-')), '0003_production_seed.sql');
+
+  await buildProductionSeed({
+    trainingRoot: new URL('../../data/training/', import.meta.url),
+    outputPath,
+  });
+
+  const sql = await readFile(outputPath, 'utf8');
+  assert.match(sql, /mars-mola-megdr-v2/);
+  assert.match(sql, /earth-nasadem-hgt-v001/);
+  assert.match(sql, /2026-11-14-mvp-v1/);
+  assert.match(sql, /earth-mauna-kea-hawaii-v1/);
+  assert.doesNotMatch(sql, /source-checksums|study-population-features|raw\//);
 });
