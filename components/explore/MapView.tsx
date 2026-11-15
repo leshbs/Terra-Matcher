@@ -4,8 +4,11 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import * as maplibregl from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
 import type { Body, CellProps, LayerKey, WindowData } from "@/lib/explore/types";
-import { OVERVIEW, buildCells, buildPoints, buildRings, windowBounds } from "@/lib/explore/geo";
+import { OVERVIEW, buildPoints, buildRings, windowBounds } from "@/lib/explore/geo";
 import { colorExpression } from "@/lib/explore/layers";
+import type { FeatureCollection } from "geojson";
+
+// MapLibre v6 loads its worker from a plain file (Turbopack cannot bundle it).
 maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 export interface MapApi {
@@ -17,6 +20,7 @@ export interface MapApi {
 
 interface Props {
   windows: WindowData[];
+  cells: FeatureCollection;
   body: Body;
   activeWindowId: string | null;
   selectedCellId: string | null;
@@ -100,10 +104,11 @@ export default function MapView(props: Props) {
     const m = mapRef.current;
     if (!m || !loaded) return;
     const ws = props.windows.filter((w) => w.body === props.body);
-    (m.getSource("cells") as maplibregl.GeoJSONSource).setData(buildCells(ws));
+    const ids = new Set(ws.map((w) => w.id));
+    (m.getSource("cells") as maplibregl.GeoJSONSource).setData({ type: "FeatureCollection", features: props.cells.features.filter((f) => ids.has(f.properties?.wid)) });
     (m.getSource("wins") as maplibregl.GeoJSONSource).setData(buildPoints(ws));
     (m.getSource("rings") as maplibregl.GeoJSONSource).setData(buildRings(ws));
-  }, [loaded, props.windows, props.body]);
+  }, [loaded, props.windows, props.cells, props.body]);
 
   useEffect(() => { if (loaded) mapRef.current!.setPaintProperty("cells-fill", "fill-color", colorExpression(props.layer)); }, [loaded, props.layer]);
   useEffect(() => { if (loaded) mapRef.current!.setPaintProperty("cells-fill", "fill-opacity", props.opacity); }, [loaded, props.opacity]);

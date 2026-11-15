@@ -17,9 +17,11 @@ const MARS_ID = "mars-gale-aeolis-palus-v1";
 export default function ExploreShell() {
   const [data, setData] = useState<ExploreData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [body, setBody] = useState<Body>("mars");
   const [winId, setWinId] = useState<string | null>(null);
   const [sel, setSel] = useState<Selection>(null);
+  const [expanded, setExpanded] = useState(false);
   const [layer, setLayer] = useState<LayerKey>("slope");
   const [opacity, setOpacity] = useState(0.85);
   const [mapVersion, setMapVersion] = useState(0);
@@ -27,12 +29,15 @@ export default function ExploreShell() {
   const winRef = useRef<string | null>(null);
   winRef.current = winId;
 
-  useEffect(() => { loadExplore().then(setData).catch((e: Error) => setError(e.message)); }, []);
+  useEffect(() => {
+    setError(null);
+    loadExplore().then(setData).catch((e: Error) => setError(e.message));
+  }, [attempt]);
 
   const openWindow = useCallback((id: string, fly = true) => {
     const w = data?.windows.find((x) => x.id === id);
     if (!w) return;
-    setBody(w.body); setWinId(id); setSel({ kind: "window", id });
+    setBody(w.body); setWinId(id); setSel({ kind: "window", id }); setExpanded(false);
     if (fly) api.current?.fitWindow(id);
   }, [data]);
 
@@ -62,6 +67,8 @@ export default function ExploreShell() {
             ))}
           </div>
           <h2 className={s.h2}>Jendela studi (radius 20 km)</h2>
+          {!data && !error && <p className={s.sub}>Memuat data peta…</p>}
+          {data && list.length === 0 && <p className={s.sub}>Belum ada jendela untuk benda ini.</p>}
           {list.map((w) => (
             <button key={w.id} className={`${s.item} ${winId === w.id ? s.on : ""}`} onClick={() => openWindow(w.id)}>
               <b>{w.name}</b>
@@ -69,13 +76,14 @@ export default function ExploreShell() {
             </button>
           ))}
           <LayerControl value={layer} onChange={setLayer} opacity={opacity} onOpacity={setOpacity} />
-          <p className={s.note}>Data dari paket model <b>{data?.meta.modelRunId ?? "…"}</b>: 25 titik sampel per jendela, analisis 500 m, jendela lokal 3 km. Ini kemiripan medan berbasis data, bukan persetujuan lokasi misi.</p>
+          <p className={s.note}>Data dari paket model <b>{data?.meta.modelRunId ?? "…"}</b>: titik sampel analisis 500 m, jendela lokal 3 km. Ini kemiripan medan berbasis data, bukan persetujuan lokasi misi.</p>
+          <p className={s.srcnote}>Sumber: {data ? data.attribution.join(" · ") : "NASA PDS Geosciences Node · NASA LP DAAC"}</p>
         </aside>
 
         <main className={s.mapwrap}>
           {data && (
             <MapView
-              windows={data.windows} body={body} activeWindowId={winId}
+              windows={data.windows} cells={data.cells} body={body} activeWindowId={winId}
               selectedCellId={sel?.kind === "cell" ? sel.cell.id : null}
               layer={layer} opacity={opacity} panelOpen={!!sel}
               onReady={(a) => { api.current = a; setMapVersion((v) => v + 1); }}
@@ -96,11 +104,18 @@ export default function ExploreShell() {
             <div className={s.lr}><span>{fmt(L.range[0])}</span><span>{fmt(L.range[1])}</span></div>
             <div className={s.attr}>Titik sampel grid 500 m, digambar sebagai kotak 4 km. Skala tetap untuk semua jendela.</div>
           </div>
+          {!data && !error && <div className={s.loading}>Memuat peta…</div>}
           {data && (
             <Inspector selection={sel} windows={data.windows} datasets={data.datasets} runId={data.meta.modelRunId} layer={layer}
-              onClose={() => setSel(null)} onShowWindow={() => winId && setSel({ kind: "window", id: winId })} onZoom={() => winId && openWindow(winId)} />
+              onClose={() => setSel(null)} onShowWindow={() => winId && setSel({ kind: "window", id: winId })} onZoom={() => winId && openWindow(winId)}
+              expanded={expanded} onToggleExpand={() => setExpanded((v) => !v)} />
           )}
-          {error && <div className={s.err} role="alert">Gagal memuat data peta: {error}</div>}
+          {error && (
+            <div className={s.err} role="alert">
+              Gagal memuat data peta: {error}
+              <button className={s.retry} onClick={() => setAttempt((n) => n + 1)}>Coba lagi</button>
+            </div>
+          )}
         </main>
       </div>
     </div>
