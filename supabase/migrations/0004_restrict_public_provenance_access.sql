@@ -1,4 +1,4 @@
--- 0003_restrict_public_provenance_access.sql
+-- 0004_restrict_public_provenance_access.sql
 --
 -- Tujuan: metadata methodology yang sudah disetujui tetap publik, sementara
 -- akses baca anon ke provenance pipeline draft (ranking contributions dan
