@@ -183,8 +183,8 @@ Fokus: memastikan proyek memenangkan Validity, Relevance, dan Impact, bukan hany
 
 ### Hari 1
 
-- [ ] Menulis copy landing page: masalah, solusi, cara kerja, dan impact.
-- [ ] Menulis deskripsi Mars scenario.
+- [x] Menulis copy landing page: masalah, solusi, cara kerja, dan impact.
+- [x] Menulis deskripsi Mars scenario.
 - [x] Menulis operational hypothesis untuk tiap kandidat Bumi.
 - [x] Menulis limitation statement untuk setiap kandidat.
 - [x] Menulis disclaimer ilmiah utama.
