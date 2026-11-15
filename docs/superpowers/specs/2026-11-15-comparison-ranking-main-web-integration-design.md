@@ -19,6 +19,8 @@ Comparison/Ranking and Explorer are one public story, not two independent data p
 
 The shared repository owns Supabase queries and validation for `scenarios`, `model_runs`, `candidate_scores`, `ranking_contributions`, `location_evidence`, datasets, and locations. It returns `ProductionScenarioContext`. The comparison assembler maps that context to `ComparisonDataset`; the Explorer assembler maps the same context plus exactly 25 validated grid samples per location to its map contract. Browser code only fetches the matching Next.js route and never imports Supabase.
 
+`model_runs.status` is the production readiness gate. Its allowed values are `draft`, `ready`, and `retired`; the repository accepts exactly one `ready` run for a scenario. Migration `0005_model_run_readiness.sql` introduces this column and sets the approved MVP seed run to `ready`. Explorer grid samples follow in `0006_explorer_grid_samples.sql`.
+
 For the MVP, a single Mars scenario and five Earth candidates are required. Explorer therefore displays six windows and exactly 150 source-backed grid samples. It must never invent map cells from aggregate ranking features.
 
 ## Scope
