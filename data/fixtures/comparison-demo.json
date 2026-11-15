@@ -1,0 +1,606 @@
+{
+  "schemaVersion": "1.0.0",
+  "dataMode": "fixture",
+  "disclaimer": "data-derived similarity, not mission-site approval",
+  "model": {
+    "modelRunId": "2026-11-15-comparison-fixture-v1",
+    "modelVersion": "fixture-ui-v1",
+    "generatedAt": "2026-11-15T00:00:00.000Z",
+    "algorithm": "Weighted L1 distance over body-specific ECDF mid-rank percentiles",
+    "transformationVersion": "ecdf-midrank-v1",
+    "weights": {
+      "median_slope_deg": 0.35,
+      "terrain_roughness_m": 0.35,
+      "relative_relief_m": 0.3
+    },
+    "provenanceNote": "All feature values and scores in this file are synthetic UI fixtures. Dataset IDs identify the intended source products for the final pipeline run, not the provenance of these illustrative numbers."
+  },
+  "featureDefinitions": {
+    "median_slope_deg": {
+      "label": "Median slope",
+      "shortLabel": "Slope",
+      "unit": "degrees",
+      "unitSymbol": "°",
+      "weight": 0.35,
+      "analysisWindow": "3 km local window",
+      "description": "Median slope derived from the DEM. Lower values indicate flatter ground."
+    },
+    "terrain_roughness_m": {
+      "label": "Terrain roughness",
+      "shortLabel": "Roughness",
+      "unit": "metres",
+      "unitSymbol": "m",
+      "weight": 0.35,
+      "analysisWindow": "3 km local window",
+      "description": "Standard deviation of elevation within the local analysis window."
+    },
+    "relative_relief_m": {
+      "label": "Relative relief",
+      "shortLabel": "Relief",
+      "unit": "metres",
+      "unitSymbol": "m",
+      "weight": 0.3,
+      "analysisWindow": "3 km local window",
+      "description": "Local maximum elevation minus local minimum elevation."
+    }
+  },
+  "datasets": [
+    {
+      "id": "mars-mola-megdr-v2",
+      "provider": "NASA PDS Geosciences Node",
+      "product": "Mars Global Surveyor Mars Orbiter Laser Altimeter Mission Experiment Gridded Data Records: topography",
+      "version": "2.0 / PDS4 maintained bundle",
+      "url": "https://pds-geosciences.wustl.edu/missions/mgs/megdr.html",
+      "citation": "Smith, D. E., et al. (2001). Mars Orbiter Laser Altimeter: Experiment summary after the first year of global mapping of Mars. Journal of Geophysical Research: Planets, 106(E10), 23689-23722. https://doi.org/10.1029/2000JE001364",
+      "nativeResolution": "128 pixels per degree (about 463 m at the equator)",
+      "unit": "m above MOLA areoid",
+      "role": "Intended Mars reference source"
+    },
+    {
+      "id": "earth-nasadem-hgt-v001",
+      "provider": "NASA EOSDIS Land Processes Distributed Active Archive Center",
+      "product": "NASADEM Merged DEM Global 1 arc second",
+      "version": "V001",
+      "url": "https://doi.org/10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001",
+      "citation": "NASA JPL (2020). NASADEM Merged DEM Global 1 arc second V001 [Data set]. NASA EOSDIS Land Processes DAAC. https://doi.org/10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001",
+      "nativeResolution": "1 arc-second (about 30 m at the equator)",
+      "unit": "m relative to the EGM96 geoid",
+      "role": "Intended Earth candidate source"
+    },
+    {
+      "id": "fixture-comparison-ui-v1",
+      "provider": "Terra Analog hackathon team",
+      "product": "Synthetic comparison fixture for Day 1 UI development",
+      "version": "1.0.0",
+      "url": "https://github.com/",
+      "citation": "Terra Analog Mission Control team (2026). Synthetic UI fixture; not a measured dataset.",
+      "nativeResolution": "Not applicable",
+      "unit": "Mixed illustrative units",
+      "role": "Synthetic values used by this demo only"
+    }
+  ],
+  "scenario": {
+    "id": "mars-gale-aeolis-palus-v1",
+    "name": "Gale Crater / Aeolis Palus",
+    "body": "mars",
+    "kind": "reference-scenario",
+    "center": {
+      "latitude": -4.5895,
+      "longitude": 137.4417
+    },
+    "radiusKm": 20,
+    "summary": "A 20 km terrain window centred on Gale Crater / Aeolis Palus. The window is used as a reference profile for rover-mobility and sedimentary-landscape interpretation hypotheses.",
+    "operationalHypothesis": "Reference terrain window for rover mobility and sedimentary-landscape interpretation.",
+    "sourceDatasetIds": [
+      "mars-mola-megdr-v2",
+      "fixture-comparison-ui-v1"
+    ],
+    "features": {
+      "median_slope_deg": {
+        "rawValue": 6.1,
+        "unit": "degrees",
+        "normalizedValue": 0.4,
+        "sourceDatasetId": "mars-mola-megdr-v2",
+        "analysisResolutionM": 463,
+        "localWindowKm": 3,
+        "qualityFlag": "fixture-illustrative"
+      },
+      "terrain_roughness_m": {
+        "rawValue": 2.8,
+        "unit": "metres",
+        "normalizedValue": 0.55,
+        "sourceDatasetId": "mars-mola-megdr-v2",
+        "analysisResolutionM": 463,
+        "localWindowKm": 3,
+        "qualityFlag": "fixture-illustrative"
+      },
+      "relative_relief_m": {
+        "rawValue": 88,
+        "unit": "metres",
+        "normalizedValue": 0.48,
+        "sourceDatasetId": "mars-mola-megdr-v2",
+        "analysisResolutionM": 463,
+        "localWindowKm": 3,
+        "qualityFlag": "fixture-illustrative"
+      }
+    },
+    "limitations": [
+      "The reference window is a terrain-comparison input, not a mission-site recommendation.",
+      "MOLA sampling is much coarser than NASADEM; derived metrics are not equally precise.",
+      "Mars atmospheric pressure, gravity, radiation, thermal regime, dust, and biology are not modelled."
+    ]
+  },
+  "candidates": [
+    {
+      "id": "earth-atacama-desert-chile-v1",
+      "name": "Atacama Desert, Chile",
+      "country": "Chile",
+      "body": "earth",
+      "kind": "candidate",
+      "center": {
+        "latitude": -23.479,
+        "longitude": -68.312
+      },
+      "radiusKm": 20,
+      "rank": 1,
+      "similarityScore": 96,
+      "dataCoverage": 1,
+      "profileStatus": "complete",
+      "summary": "Hyper-arid desert window with low relief and smooth interfluves. In this fixture, all three terrain percentiles sit close to the Gale reference.",
+      "operationalHypothesis": "Hyper-arid terrain setting for mobility and instrument-fieldwork rehearsal hypotheses.",
+      "sourceDatasetIds": [
+        "earth-nasadem-hgt-v001",
+        "fixture-comparison-ui-v1"
+      ],
+      "features": {
+        "median_slope_deg": {
+          "rawValue": 6.9,
+          "unit": "degrees",
+          "normalizedValue": 0.35,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        },
+        "terrain_roughness_m": {
+          "rawValue": 3.1,
+          "unit": "metres",
+          "normalizedValue": 0.58,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        },
+        "relative_relief_m": {
+          "rawValue": 96,
+          "unit": "metres",
+          "normalizedValue": 0.52,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        }
+      },
+      "contributions": [
+        {
+          "featureKey": "median_slope_deg",
+          "weight": 0.35,
+          "normalizedWeight": 0.35,
+          "available": true,
+          "featureDistance": 0.05,
+          "weightedContribution": 0.0175,
+          "note": "Slope percentile is very close to the Mars reference."
+        },
+        {
+          "featureKey": "terrain_roughness_m",
+          "weight": 0.35,
+          "normalizedWeight": 0.35,
+          "available": true,
+          "featureDistance": 0.03,
+          "weightedContribution": 0.0105,
+          "note": "Roughness percentile is very close to the Mars reference."
+        },
+        {
+          "featureKey": "relative_relief_m",
+          "weight": 0.3,
+          "normalizedWeight": 0.3,
+          "available": true,
+          "featureDistance": 0.04,
+          "weightedContribution": 0.012,
+          "note": "Relief percentile is very close to the Mars reference."
+        }
+      ],
+      "matchPoints": [
+        "All three terrain percentiles sit inside the match band, which drives the highest score in this fixture.",
+        "The hyper-arid setting supports an instrument-fieldwork rehearsal hypothesis."
+      ],
+      "mismatchPoints": [
+        "Absolute relief is about 8 m higher than the reference window.",
+        "No atmospheric, gravity, radiation, or biological equivalence is modelled."
+      ],
+      "limitations": [
+        "Illustrative fixture values; replace with measured MOLA and NASADEM derivatives before scientific use.",
+        "Field validation, access permissions, and local expertise are required.",
+        "A terrain match does not establish operational safety or mission suitability."
+      ]
+    },
+    {
+      "id": "earth-wadi-rum-jordan-v1",
+      "name": "Wadi Rum, Jordan",
+      "country": "Jordan",
+      "body": "earth",
+      "kind": "candidate",
+      "center": {
+        "latitude": 29.576,
+        "longitude": 35.421
+      },
+      "radiusKm": 20,
+      "rank": 2,
+      "similarityScore": 89.75,
+      "dataCoverage": 1,
+      "profileStatus": "complete",
+      "summary": "Erosional sandstone terrain with prominent cliffs and open valleys. Slope aligns strongly; roughness and relief are moderate mismatches.",
+      "operationalHypothesis": "Erosional sandstone terrain for navigation and outcrop-observation comparisons.",
+      "sourceDatasetIds": [
+        "earth-nasadem-hgt-v001",
+        "fixture-comparison-ui-v1"
+      ],
+      "features": {
+        "median_slope_deg": {
+          "rawValue": 8.6,
+          "unit": "degrees",
+          "normalizedValue": 0.48,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        },
+        "terrain_roughness_m": {
+          "rawValue": 2.4,
+          "unit": "metres",
+          "normalizedValue": 0.44,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        },
+        "relative_relief_m": {
+          "rawValue": 112,
+          "unit": "metres",
+          "normalizedValue": 0.6,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        }
+      },
+      "contributions": [
+        {
+          "featureKey": "median_slope_deg",
+          "weight": 0.35,
+          "normalizedWeight": 0.35,
+          "available": true,
+          "featureDistance": 0.08,
+          "weightedContribution": 0.028,
+          "note": "Slope percentile is inside the match band."
+        },
+        {
+          "featureKey": "terrain_roughness_m",
+          "weight": 0.35,
+          "normalizedWeight": 0.35,
+          "available": true,
+          "featureDistance": 0.11,
+          "weightedContribution": 0.0385,
+          "note": "Roughness is lower than the reference and falls in the partial-match band."
+        },
+        {
+          "featureKey": "relative_relief_m",
+          "weight": 0.3,
+          "normalizedWeight": 0.3,
+          "available": true,
+          "featureDistance": 0.12,
+          "weightedContribution": 0.036,
+          "note": "Relief is higher than the reference and falls in the partial-match band."
+        }
+      ],
+      "matchPoints": [
+        "Slope percentile is close to the Mars reference (distance 0.08).",
+        "Erosional sandstone terrain offers a useful outcrop-observation comparison."
+      ],
+      "mismatchPoints": [
+        "Roughness is lower than the reference by 0.11 ECDF units.",
+        "Relief is higher than the reference by 0.12 ECDF units."
+      ],
+      "limitations": [
+        "Sandstone erosional processes differ from Gale's sedimentary and aeolian setting.",
+        "Illustrative fixture values require replacement with measured source-backed features.",
+        "Field validation, access permissions, and local expertise are required."
+      ]
+    },
+    {
+      "id": "earth-teide-tenerife-v1",
+      "name": "Teide, Tenerife",
+      "country": "Spain",
+      "body": "earth",
+      "kind": "candidate",
+      "center": {
+        "latitude": 28.2724,
+        "longitude": -16.6425
+      },
+      "radiusKm": 20,
+      "rank": 3,
+      "similarityScore": 82.2,
+      "dataCoverage": 1,
+      "profileStatus": "complete",
+      "summary": "High volcanic edifice with steep flanks and moderate dissection. Relief aligns, while slope and roughness diverge from the reference.",
+      "operationalHypothesis": "Volcanic edifice terrain for slope and roughness comparison.",
+      "sourceDatasetIds": [
+        "earth-nasadem-hgt-v001",
+        "fixture-comparison-ui-v1"
+      ],
+      "features": {
+        "median_slope_deg": {
+          "rawValue": 11.2,
+          "unit": "degrees",
+          "normalizedValue": 0.62,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        },
+        "terrain_roughness_m": {
+          "rawValue": 2,
+          "unit": "metres",
+          "normalizedValue": 0.33,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        },
+        "relative_relief_m": {
+          "rawValue": 104,
+          "unit": "metres",
+          "normalizedValue": 0.56,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        }
+      },
+      "contributions": [
+        {
+          "featureKey": "median_slope_deg",
+          "weight": 0.35,
+          "normalizedWeight": 0.35,
+          "available": true,
+          "featureDistance": 0.22,
+          "weightedContribution": 0.077,
+          "note": "Slope is steeper than the reference in percentile terms."
+        },
+        {
+          "featureKey": "terrain_roughness_m",
+          "weight": 0.35,
+          "normalizedWeight": 0.35,
+          "available": true,
+          "featureDistance": 0.22,
+          "weightedContribution": 0.077,
+          "note": "Roughness is lower than the reference in percentile terms."
+        },
+        {
+          "featureKey": "relative_relief_m",
+          "weight": 0.3,
+          "normalizedWeight": 0.3,
+          "available": true,
+          "featureDistance": 0.08,
+          "weightedContribution": 0.024,
+          "note": "Relief percentile is inside the match band."
+        }
+      ],
+      "matchPoints": [
+        "Relative relief is close to the Mars reference (distance 0.08).",
+        "Volcanic edifice terrain is relevant for slope and roughness comparison."
+      ],
+      "mismatchPoints": [
+        "Slope differs by 0.22 ECDF units and falls in the partial-match band.",
+        "Roughness differs by 0.22 ECDF units and falls in the partial-match band."
+      ],
+      "limitations": [
+        "High-altitude volcanic setting introduces environmental differences not captured by terrain metrics.",
+        "Access, permits, and local guidance are required for any field activity.",
+        "Illustrative fixture values require replacement with measured source-backed features."
+      ]
+    },
+    {
+      "id": "earth-mauna-kea-hawaii-v1",
+      "name": "Mauna Kea, Hawai'i",
+      "country": "United States",
+      "body": "earth",
+      "kind": "candidate",
+      "center": {
+        "latitude": 19.8207,
+        "longitude": -155.4681
+      },
+      "radiusKm": 20,
+      "rank": 4,
+      "similarityScore": 69.05,
+      "dataCoverage": 1,
+      "profileStatus": "complete",
+      "summary": "Volcanic highland with steeper slopes and smoother local texture. A clear mismatch case for slope and roughness, retained to make the ranking breakdown visible.",
+      "operationalHypothesis": "Volcanic highland terrain for rover traversal and volcanic-regolith hypotheses.",
+      "sourceDatasetIds": [
+        "earth-nasadem-hgt-v001",
+        "fixture-comparison-ui-v1"
+      ],
+      "features": {
+        "median_slope_deg": {
+          "rawValue": 15.4,
+          "unit": "degrees",
+          "normalizedValue": 0.82,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        },
+        "terrain_roughness_m": {
+          "rawValue": 1.7,
+          "unit": "metres",
+          "normalizedValue": 0.24,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        },
+        "relative_relief_m": {
+          "rawValue": 121,
+          "unit": "metres",
+          "normalizedValue": 0.66,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        }
+      },
+      "contributions": [
+        {
+          "featureKey": "median_slope_deg",
+          "weight": 0.35,
+          "normalizedWeight": 0.35,
+          "available": true,
+          "featureDistance": 0.42,
+          "weightedContribution": 0.147,
+          "note": "Slope is much steeper than the reference in percentile terms."
+        },
+        {
+          "featureKey": "terrain_roughness_m",
+          "weight": 0.35,
+          "normalizedWeight": 0.35,
+          "available": true,
+          "featureDistance": 0.31,
+          "weightedContribution": 0.1085,
+          "note": "Roughness is lower than the reference and is a clear mismatch."
+        },
+        {
+          "featureKey": "relative_relief_m",
+          "weight": 0.3,
+          "normalizedWeight": 0.3,
+          "available": true,
+          "featureDistance": 0.18,
+          "weightedContribution": 0.054,
+          "note": "Relief is moderately higher than the reference."
+        }
+      ],
+      "matchPoints": [
+        "Relative relief is moderately close to the Mars reference (distance 0.18).",
+        "The volcanic highland setting is conceptually relevant for volcanic-regolith hypotheses."
+      ],
+      "mismatchPoints": [
+        "Slope is much steeper in percentile terms (distance 0.42).",
+        "Roughness is lower than the reference by 0.31 ECDF units."
+      ],
+      "limitations": [
+        "Cultural sensitivity and access constraints apply; this is not a rover-operations test site.",
+        "High-altitude environmental conditions differ from Gale Crater.",
+        "Illustrative fixture values require replacement with measured source-backed features."
+      ]
+    },
+    {
+      "id": "earth-craters-of-the-moon-idaho-v1",
+      "name": "Craters of the Moon, Idaho",
+      "country": "United States",
+      "body": "earth",
+      "kind": "candidate",
+      "center": {
+        "latitude": 43.4166,
+        "longitude": -113.5164
+      },
+      "radiusKm": 20,
+      "rank": 5,
+      "similarityScore": 54,
+      "dataCoverage": 0.7,
+      "profileStatus": "partial",
+      "summary": "Basaltic volcanic field retained as a partial-profile mismatch case. Slope and roughness are far from the reference, and relative relief is unavailable.",
+      "operationalHypothesis": "Basaltic volcanic terrain for navigation and geologic-process training hypotheses.",
+      "sourceDatasetIds": [
+        "earth-nasadem-hgt-v001",
+        "fixture-comparison-ui-v1"
+      ],
+      "features": {
+        "median_slope_deg": {
+          "rawValue": 18.9,
+          "unit": "degrees",
+          "normalizedValue": 0.94,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        },
+        "terrain_roughness_m": {
+          "rawValue": 1.5,
+          "unit": "metres",
+          "normalizedValue": 0.17,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "fixture-illustrative"
+        },
+        "relative_relief_m": {
+          "rawValue": null,
+          "unit": "metres",
+          "normalizedValue": null,
+          "sourceDatasetId": "earth-nasadem-hgt-v001",
+          "analysisResolutionM": 30,
+          "localWindowKm": 3,
+          "qualityFlag": "no-data"
+        }
+      },
+      "contributions": [
+        {
+          "featureKey": "median_slope_deg",
+          "weight": 0.35,
+          "normalizedWeight": 0.5,
+          "available": true,
+          "featureDistance": 0.54,
+          "weightedContribution": 0.27,
+          "note": "Slope is much steeper than the reference; remaining weights are renormalised."
+        },
+        {
+          "featureKey": "terrain_roughness_m",
+          "weight": 0.35,
+          "normalizedWeight": 0.5,
+          "available": true,
+          "featureDistance": 0.38,
+          "weightedContribution": 0.19,
+          "note": "Roughness is much lower than the reference; remaining weights are renormalised."
+        },
+        {
+          "featureKey": "relative_relief_m",
+          "weight": 0.3,
+          "normalizedWeight": 0,
+          "available": false,
+          "featureDistance": null,
+          "weightedContribution": 0,
+          "note": "No comparable relief value. The feature is excluded and the remaining weights are renormalised."
+        }
+      ],
+      "matchPoints": [],
+      "mismatchPoints": [
+        "Slope differs by 0.54 ECDF units and is a clear mismatch.",
+        "Roughness differs by 0.38 ECDF units and is a clear mismatch.",
+        "Relative relief is unavailable, so the profile covers only 70% of the configured weight."
+      ],
+      "limitations": [
+        "Partial profile: relative relief is missing, so the score excludes 30% of the configured weight.",
+        "A partial score must not be treated as directly comparable with complete profiles.",
+        "Illustrative fixture values require replacement with measured source-backed features."
+      ]
+    }
+  ],
+  "globalLimitations": [
+    "Fixture data: all feature values and scores in this demo are synthetic and illustrative, not measured or scientifically validated.",
+    "Body-specific ECDF normalisation prevents direct physical equivalence between Earth and Mars raw values.",
+    "Unmodelled factors include gravity, atmospheric pressure and composition, radiation, thermal regime, dust, and biological activity.",
+    "Source resolution differs: MOLA is about 463 m at the equator, while NASADEM is about 30 m. Derived metrics are not equally precise.",
+    "Terrain similarity does not establish access, land rights, safety, operational logistics, or field validation.",
+    "This is a candidate hypothesis, not a landing-site recommendation."
+  ]
+}
