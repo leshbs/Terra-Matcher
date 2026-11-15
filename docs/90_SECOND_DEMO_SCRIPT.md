@@ -5,13 +5,13 @@
 
 | Time | Screen action | Spoken script |
 |---|---|---|
-| 0:00–0:10 | Open Mission Control. | “Mission rehearsal starts on Earth. Terra Analog Mission Control asks a focused question: which curated Earth landscapes can help us study a defined Martian terrain problem?” |
-| 0:10–0:22 | Select **Gale Crater / Aeolis Palus reference window**. | “Our reference is a 20-kilometre window in Gale Crater’s Aeolis Palus. We do not search for a perfect copy of Mars; we compare declared, measurable terrain features.” |
-| 0:22–0:36 | Point to the ranked list; select rank 1. | “The ranking compares five Earth candidate hypotheses using median slope, terrain roughness, and relative relief. The top result is a data-derived terrain similarity score, not a probability and not a landing-site recommendation.” |
-| 0:36–0:52 | Open **Candidate detail** and the evidence panel. | “Here, raw terrain values remain visible. More importantly, the evidence panel shows how each feature contributed, the source dataset IDs, an operational hypothesis, and this candidate’s limitation. The similarity score is not the answer; the explanation is.” |
-| 0:52–1:06 | Read one limitation, then click **Methodology & provenance**. | “A terrain match does not model gravity, atmosphere, radiation, temperature, biology, access, safety, regulation, or land permissions. That boundary is explicit rather than hidden.” |
-| 1:06–1:20 | Show model run and both source datasets. | “The methodology page identifies the exact model run, 500-metre analysis resolution, 3-kilometre local window, transform version, and the registered MOLA and NASADEM data sources.” |
-| 1:20–1:30 | Return to the closing view. | “The impact is an auditable starting point for rover, instrument, and geology questions on Earth. It helps people turn open planetary data into testable hypotheses—pending field validation and science review.” |
+| 0:00–0:10 | Open Mission Control. | “Mission rehearsal starts on Earth. This reference window, model run, and disclaimer are the canonical story used by ranking and Explorer.” |
+| 0:10–0:24 | Open **Explore terrain**. | “Explorer shows the Mars reference and five Earth windows from the same model run. Each window has 25 source-backed grid samples; it does not invent terrain cells from a ranking aggregate.” |
+| 0:24–0:38 | Select the top Earth window, inspect one cell, then return to the window. | “The map exposes slope, roughness, and relative relief alongside dataset provenance and limitations. It is a terrain comparison, not a mission-site approval.” |
+| 0:38–0:52 | Open **Ranking**, then select rank 1. | “The same five candidates are ranked with median slope, terrain roughness, and relative relief. The top result is a data-derived similarity score, not a probability.” |
+| 0:52–1:08 | Open **Candidate detail** and the evidence panel. | “Raw values, feature contributions, source IDs, the operational hypothesis, and limitations remain visible. The explanation matters as much as the score.” |
+| 1:08–1:20 | Read one limitation, then open **Methodology & provenance**. | “A terrain match does not model gravity, atmosphere, radiation, temperature, biology, access, safety, regulation, or land permissions.” |
+| 1:20–1:30 | Show model run and both source datasets. | “The exact run, 500-metre analysis resolution, 3-kilometre local window, transform version, MOLA, and NASADEM sources make this an auditable starting point for field-validation questions.” |
 
 ## Delivery notes
 
@@ -24,6 +24,8 @@
 
 - [ ] Completes in 80–90 seconds without rushing.
 - [ ] Shows the production data-mode banner.
+- [ ] Shows the same model run in Explorer and Ranking.
+- [ ] Shows one Explorer window and one grid-cell inspection.
 - [ ] Opens one candidate’s raw features, contributions, hypothesis, and limitation.
 - [ ] Opens methodology and identifies both datasets.
 - [ ] States at least one unmodeled condition.
