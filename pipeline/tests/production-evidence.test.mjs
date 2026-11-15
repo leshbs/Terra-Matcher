@@ -82,5 +82,11 @@ test('builds a compact production seed without raw-data references', async () =>
   assert.match(sql, /earth-nasadem-hgt-v001/);
   assert.match(sql, /2026-11-14-mvp-v1/);
   assert.match(sql, /earth-mauna-kea-hawaii-v1/);
+  const maunaKeaScore = sql
+    .split("\n")
+    .find((line) => line.includes("candidate_scores") && line.includes("earth-mauna-kea-hawaii-v1"));
+  assert.ok(maunaKeaScore, "Mauna Kea production score should be seeded.");
+  assert.match(maunaKeaScore, /median_slope_deg, terrain_roughness_m, relative_relief_m/);
+  assert.match(maunaKeaScore, /7\.047629740447329/);
   assert.doesNotMatch(sql, /source-checksums|study-population-features|raw\//);
 });

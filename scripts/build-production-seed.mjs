@@ -46,9 +46,37 @@ function insert(table, columns, values, conflict) {
   return `insert into public.${table} (${columns.join(', ')}) values (${values.join(', ')}) on conflict ${conflict};`;
 }
 
+const requiredFeatureKeys = [
+  'median_slope_deg',
+  'terrain_roughness_m',
+  'relative_relief_m',
+];
+
+function indexFeatureValues(features) {
+  const valuesByLocation = new Map();
+
+  for (const feature of features) {
+    if (!requiredFeatureKeys.includes(feature.featureKey)) continue;
+    const values = valuesByLocation.get(feature.locationId) ?? {};
+    values[feature.featureKey] = feature.rawValue;
+    valuesByLocation.set(feature.locationId, values);
+  }
+
+  return valuesByLocation;
+}
+
+function rawValuesForCandidate(valuesByLocation, candidateLocationId) {
+  const values = valuesByLocation.get(candidateLocationId);
+  if (!values || requiredFeatureKeys.some((key) => !Number.isFinite(values[key]))) {
+    throw new Error(`Missing raw terrain features for candidate: ${candidateLocationId}`);
+  }
+  return values;
+}
+
 export async function buildProductionSeed({ trainingRoot, outputPath }) {
   const input = await loadInput(trainingRoot);
   validateProductionEvidence(input);
+  const featureValuesByLocation = indexFeatureValues(input.features);
 
   const lines = ['begin;'];
   for (const dataset of input.datasets) {
@@ -78,9 +106,10 @@ export async function buildProductionSeed({ trainingRoot, outputPath }) {
   }
 
   for (const ranking of input.rankings) {
-    lines.push(insert('candidate_scores', ['model_run_id', 'model_version', 'scenario_id', 'candidate_id', 'similarity_score', 'rank', 'data_coverage', 'source_dataset_ids', 'generated_at'], [
-      sqlString(ranking.modelRunId), sqlString(input.manifest.transformationVersion), sqlString(ranking.referenceLocationId), sqlString(ranking.candidateLocationId), ranking.similarityScore, ranking.rank, ranking.dataCoverage, sqlJson(ranking.sourceDatasetIds), 'now()',
-    ], '(model_run_id, scenario_id, candidate_id) do update set model_version = excluded.model_version, similarity_score = excluded.similarity_score, rank = excluded.rank, data_coverage = excluded.data_coverage, source_dataset_ids = excluded.source_dataset_ids, generated_at = excluded.generated_at'));
+    const rawValues = rawValuesForCandidate(featureValuesByLocation, ranking.candidateLocationId);
+    lines.push(insert('candidate_scores', ['model_run_id', 'model_version', 'scenario_id', 'candidate_id', 'median_slope_deg', 'terrain_roughness_m', 'relative_relief_m', 'similarity_score', 'rank', 'data_coverage', 'source_dataset_ids', 'generated_at'], [
+      sqlString(ranking.modelRunId), sqlString(input.manifest.transformationVersion), sqlString(ranking.referenceLocationId), sqlString(ranking.candidateLocationId), rawValues.median_slope_deg, rawValues.terrain_roughness_m, rawValues.relative_relief_m, ranking.similarityScore, ranking.rank, ranking.dataCoverage, sqlJson(ranking.sourceDatasetIds), 'now()',
+    ], '(model_run_id, scenario_id, candidate_id) do update set model_version = excluded.model_version, median_slope_deg = excluded.median_slope_deg, terrain_roughness_m = excluded.terrain_roughness_m, relative_relief_m = excluded.relative_relief_m, similarity_score = excluded.similarity_score, rank = excluded.rank, data_coverage = excluded.data_coverage, source_dataset_ids = excluded.source_dataset_ids, generated_at = excluded.generated_at'));
   }
 
   for (const contribution of input.contributions) {
