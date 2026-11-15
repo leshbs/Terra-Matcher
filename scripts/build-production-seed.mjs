@@ -19,7 +19,7 @@ async function loadJson(root, relativePath) {
 async function loadInput(trainingRoot) {
   const root = trainingRoot instanceof URL ? fileURLToPath(trainingRoot) : trainingRoot;
   const runRoot = 'processed/2026-11-14-mvp-v1';
-  const [datasets, locations, manifest, features, rankings, contributions, evidence, validation] = await Promise.all([
+  const [datasets, locations, manifest, features, rankings, contributions, evidence, validation, grid] = await Promise.all([
     loadJson(root, 'datasets.json'),
     loadJson(root, 'locations.json'),
     loadJson(root, `${runRoot}/model_manifest.json`),
@@ -28,6 +28,7 @@ async function loadInput(trainingRoot) {
     loadJson(root, `${runRoot}/ranking-contributions.json`),
     loadJson(root, `${runRoot}/location-evidence.json`),
     loadJson(root, `${runRoot}/validation-report.json`),
+    loadJson(root, `${runRoot}/explorer-grid-samples.json`),
   ]);
 
   return {
@@ -39,6 +40,7 @@ async function loadInput(trainingRoot) {
     contributions: contributions.contributions,
     evidence: evidence.evidence,
     validation,
+    grid: grid.samples,
   };
 }
 
@@ -158,6 +160,13 @@ export async function buildProductionSeed({ trainingRoot, outputPath }) {
     lines.push(insert('location_evidence', ['model_run_id', 'location_id', 'operational_hypothesis', 'limitations', 'source_dataset_ids'], [
       sqlString(item.modelRunId), sqlString(item.locationId), sqlString(item.operationalHypothesis), sqlJson(item.limitations), sqlJson(item.sourceDatasetIds),
     ], '(model_run_id, location_id) do update set operational_hypothesis = excluded.operational_hypothesis, limitations = excluded.limitations, source_dataset_ids = excluded.source_dataset_ids'));
+  }
+
+  if (input.grid.length !== 150) throw new Error("Explorer seed requires exactly 150 samples.");
+  for (const sample of input.grid) {
+    lines.push(insert('explorer_grid_samples', ['id', 'model_run_id', 'location_id', 'dataset_id', 'offset_east_km', 'offset_north_km', 'slope', 'roughness', 'relative_relief', 'quality_flag'], [
+      sqlString(sample.id), sqlString(sample.modelRunId), sqlString(sample.windowId), sqlString(sample.datasetId), sample.offsetEastKm, sample.offsetNorthKm, sample.slope, sample.roughness, sample.relativeRelief, sqlString(sample.qualityFlag),
+    ], '(id) do update set slope = excluded.slope, roughness = excluded.roughness, relative_relief = excluded.relative_relief, quality_flag = excluded.quality_flag'));
   }
 
   lines.push('commit;');

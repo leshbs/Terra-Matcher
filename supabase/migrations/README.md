@@ -18,6 +18,7 @@ plan — the runner would treat the database as empty and replay every file.
 | 4 | `0004_restrict_public_provenance_access.sql` | Replaces the open dataset/model_run policies with "approved" ones; removes anon policies from `ranking_contributions` and `location_evidence` |
 | 5 | `0005_model_run_readiness.sql` | Adds explicit draft/ready/retired state and permits public reads only for ready model runs |
 | 6 | `0006_location_profiles.sql` | Adds source-backed Mars and candidate profiles for the ready model run |
+| 7 | `0007_explorer_grid_samples.sql` | Adds 25 source-backed terrain samples for every Explorer window |
 
 Order matters: step 2 opens public SELECT on `datasets` and `model_runs`,
 and step 4 closes it again. Running them out of order leaves the database open.
