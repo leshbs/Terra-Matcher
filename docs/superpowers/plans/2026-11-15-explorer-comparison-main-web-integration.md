@@ -29,7 +29,8 @@
 - `lib/explore/contracts.ts` — Zod schema and TypeScript types for the Explorer API envelope.
 - `lib/explore/assembler.ts` — pure mapper from shared context and grid samples to Explorer data.
 - `supabase/migrations/0005_model_run_readiness.sql` — model-run readiness enum/check, default, backfill, and approved read-policy update.
-- `supabase/migrations/0006_explorer_grid_samples.sql` — table, constraints, indexes, RLS, and read policy.
+- `supabase/migrations/0006_location_profiles.sql` — source-backed Mars/candidate feature profiles and production read policy.
+- `supabase/migrations/0007_explorer_grid_samples.sql` — table, constraints, indexes, RLS, and read policy.
 - `supabase/seed/0004_explorer_grid_samples.sql` — production grid-sample seed generated from the validated pipeline artifact.
 - `scripts/build-explorer-grid-seed.mjs` — validates the six-by-25 import artifact and emits the seed SQL.
 - `app/api/scenarios/[scenarioId]/rankings/route.ts` — canonical Comparison/Ranking endpoint using the shared repository.
@@ -47,6 +48,7 @@
 - Create: `tests/unit/scenario-production.test.mjs`
 - Modify: `lib/terrain-evidence.ts`
 - Create: `supabase/migrations/0005_model_run_readiness.sql`
+- Create: `supabase/migrations/0006_location_profiles.sql`
 - Modify: `supabase/seed/0003_production_seed.sql`
 - Modify: `supabase/migrations/README.md`
 
@@ -72,9 +74,10 @@ Run: `node --test tests/unit/scenario-production.test.mjs`
 
 Expected: FAIL because the repository module does not exist.
 
-- [ ] **Step 3: Add migration `0005_model_run_readiness.sql` and update the production seed.** Add `status text not null default 'draft' check (status in ('draft', 'ready', 'retired'))` to `model_runs`, backfill existing rows to `draft` except `2026-11-14-mvp-v1` to `ready`, require the seed upsert to write `status = 'ready'`, and replace the anon model-run policy with one restricted to `status = 'ready'`. Update the migration README so `0005` precedes the grid-sample migration.
 
-- [ ] **Step 4: Implement Zod row schemas and `validateProductionContext`.**
+- [ ] **Step 4: Add `0006_location_profiles.sql` and production seed profiles.** Create a model-run-scoped table keyed by `(model_run_id, location_id)` with a location kind (`scenario` or `candidate`), coordinate/radius/summary/evidence fields, dataset IDs, analysis metadata, quality flag, and three JSON feature values `{ rawValue, normalizedValue, unit, sourceDatasetId }`. Require a production scenario profile plus five production candidate profiles for the ready run; protect it with RLS and allow only approved ready-run reads. Seed profile values from the validated pipeline artifact, never from `comparison-demo.json`.
+
+- [ ] **Step 5: Implement Zod row schemas and `validateProductionContext`.**
 
 ```ts
 export function validateProductionContext(input: unknown): ProductionScenarioContext {
@@ -85,25 +88,25 @@ export function validateProductionContext(input: unknown): ProductionScenarioCon
 }
 ```
 
-- [ ] **Step 5: Implement `loadProductionScenario` as the only Supabase join/query boundary.** Query `scenarios`, `model_runs`, `candidate_scores`, `ranking_contributions`, `location_evidence`, `datasets`, and locations; select exactly one `status = 'ready'` run; validate IDs, candidate rank order, required three contributions, evidence, and shared model-run ID before returning the context.
+- [ ] **Step 6: Implement `loadProductionScenario` as the only Supabase join/query boundary.** Query `scenarios`, `model_runs`, `candidate_scores`, `ranking_contributions`, `location_evidence`, `location_profiles`, datasets, and candidates; select exactly one `status = 'ready'` run; validate the Mars profile, five candidate profiles, IDs, rank order, required three contributions, evidence, and shared model-run ID before returning the context.
 
-- [ ] **Step 6: Run repository and existing evidence tests.**
+- [ ] **Step 7: Run repository and existing evidence tests.**
 
 Run: `node --test tests/unit/scenario-production.test.mjs tests/unit/terrain-evidence.test.mjs`
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit.**
+- [ ] **Step 8: Commit.**
 
 ```bash
-git add lib/scenario-production.ts lib/terrain-evidence.ts tests/unit/scenario-production.test.mjs supabase/migrations/0005_model_run_readiness.sql supabase/seed/0003_production_seed.sql supabase/migrations/README.md
+git add lib/scenario-production.ts lib/terrain-evidence.ts tests/unit/scenario-production.test.mjs supabase/migrations/0005_model_run_readiness.sql supabase/migrations/0006_location_profiles.sql supabase/seed/0003_production_seed.sql supabase/migrations/README.md
 git commit -m "feat: add validated production scenario repository"
 ```
 
 ### Task 2: Persist and validate map grid samples
 
 **Files:**
-- Create: `supabase/migrations/0006_explorer_grid_samples.sql`
+- Create: `supabase/migrations/0007_explorer_grid_samples.sql`
 - Create: `scripts/build-explorer-grid-seed.mjs`
 - Create: `supabase/seed/0004_explorer_grid_samples.sql`
 - Create: `tests/unit/explorer-grid-seed.test.mjs`
@@ -131,11 +134,11 @@ Run: `node --test tests/unit/explorer-grid-seed.test.mjs`
 
 Expected: FAIL because the seed builder is absent.
 
-- [ ] **Step 3: Write migration `0006_explorer_grid_samples.sql`.** Create the FK-constrained table with unique `(location_id, model_run_id, offset_east_km, offset_north_km)`, numeric checks for finite non-negative terrain measures, an index on `(model_run_id, location_id)`, RLS enabled, and a SELECT-only policy restricted to approved/ready production rows. Do not create INSERT, UPDATE, or DELETE policies for `anon`.
+- [ ] **Step 3: Write migration `0007_explorer_grid_samples.sql`.** Create the FK-constrained table with unique `(location_id, model_run_id, offset_east_km, offset_north_km)`, numeric checks for finite non-negative terrain measures, an index on `(model_run_id, location_id)`, RLS enabled, and a SELECT-only policy restricted to approved/ready production rows. Do not create INSERT, UPDATE, or DELETE policies for `anon`.
 
 - [ ] **Step 4: Implement the deterministic seed builder and generate `0004_explorer_grid_samples.sql`.** It must reject duplicate offsets, unknown location/dataset/model-run IDs, non-production rows, bad units, and any count other than 25 per location before emitting idempotent inserts.
 
-- [ ] **Step 5: Update the migration README with exact order.** Record `0006_explorer_grid_samples.sql` after `0005_model_run_readiness.sql` and `0004_explorer_grid_samples.sql` after the production seed.
+- [ ] **Step 5: Update the migration README with exact order.** Record `0007_explorer_grid_samples.sql` after `0006_location_profiles.sql` and `0004_explorer_grid_samples.sql` after the production seed.
 
 - [ ] **Step 6: Run artifact tests.**
 
@@ -146,7 +149,7 @@ Expected: PASS.
 - [ ] **Step 7: Commit.**
 
 ```bash
-git add supabase/migrations/0006_explorer_grid_samples.sql supabase/migrations/README.md scripts/build-explorer-grid-seed.mjs supabase/seed/0004_explorer_grid_samples.sql tests/unit/explorer-grid-seed.test.mjs
+git add supabase/migrations/0007_explorer_grid_samples.sql supabase/migrations/README.md scripts/build-explorer-grid-seed.mjs supabase/seed/0004_explorer_grid_samples.sql tests/unit/explorer-grid-seed.test.mjs
 git commit -m "feat: add versioned Explorer grid samples"
 ```
 
