@@ -18,7 +18,7 @@ export const EXTRA_LIMITATIONS = [
   "MOLA and NASADEM differ in sensing method and vertical reference; only terrain morphology is measured.",
 ];
 
-export const fmt = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 }).format;
+export const fmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format;
 
 export function colorExpression(key: LayerKey): ExpressionSpecification {
   const { range: [lo, hi], colors } = LAYERS[key];

@@ -64,24 +64,24 @@ export default function ExploreShell() {
       <div className={s.app}>
         <aside className={s.side}>
           <h1>Terra Analog Explorer</h1>
-          <p className={s.sub}>Peta medan interaktif untuk satu skenario Mars dan lima kandidat Bumi.</p>
-          <div className={s.seg} role="group" aria-label="Benda langit">
+          <p className={s.sub}>Interactive terrain map for one Mars scenario and five Earth candidates.</p>
+          <div className={s.seg} role="group" aria-label="Celestial body">
             {(["mars", "earth"] as Body[]).map((b) => (
-              <button key={b} className={body === b ? s.on : ""} onClick={() => switchBody(b)}>{b === "mars" ? "Mars" : "Bumi"}</button>
+              <button key={b} className={body === b ? s.on : ""} onClick={() => switchBody(b)}>{b === "mars" ? "Mars" : "Earth"}</button>
             ))}
           </div>
-          <h2 className={s.h2}>Jendela studi (radius 20 km)</h2>
-          {!data && !error && <p className={s.sub}>Memuat data peta…</p>}
-          {data && list.length === 0 && <p className={s.sub}>Belum ada jendela untuk benda ini.</p>}
+          <h2 className={s.h2}>Study windows (20 km radius)</h2>
+          {!data && !error && <p className={s.sub}>Loading map data…</p>}
+          {data && list.length === 0 && <p className={s.sub}>No windows are available for this body.</p>}
           {list.map((w) => (
             <button key={w.id} className={`${s.item} ${winId === w.id ? s.on : ""}`} onClick={() => openWindow(w.id)}>
               <b>{w.name}</b>
-              <small>{w.rank ? `#${w.rank} · skor ${fmt(w.score!)}` : "Skenario acuan"} · {w.center[1].toFixed(2)}°, {w.center[0].toFixed(2)}°</small>
+              <small>{w.rank ? `#${w.rank} · score ${fmt(w.score!)}` : "Reference scenario"} · {w.center[1].toFixed(2)}°, {w.center[0].toFixed(2)}°</small>
             </button>
           ))}
           <LayerControl value={layer} onChange={setLayer} opacity={opacity} onOpacity={setOpacity} />
-          <p className={s.note}>Data dari paket model <b>{data?.meta.modelRunId ?? "…"}</b>: titik sampel analisis 500 m, jendela lokal 3 km. Ini kemiripan medan berbasis data, bukan persetujuan lokasi misi.</p>
-          <p className={s.srcnote}>Sumber: {data ? data.attribution.join(" · ") : "NASA PDS Geosciences Node · NASA LP DAAC"}</p>
+          <p className={s.note}>Data from model run <b>{data?.meta.modelRunId ?? "…"}</b>: 500 m analysis sample points and 3 km local windows. This is data-derived terrain similarity, not mission-site approval.</p>
+          <p className={s.srcnote}>Sources: {data ? data.attribution.join(" · ") : "NASA PDS Geosciences Node · NASA LP DAAC"}</p>
         </aside>
 
         <main className={s.mapwrap}>
@@ -97,18 +97,18 @@ export default function ExploreShell() {
             />
           )}
           <div className={s.ctl}>
-            <button aria-label="Perbesar" onClick={() => api.current?.zoomIn()}>+</button>
-            <button aria-label="Perkecil" onClick={() => api.current?.zoomOut()}>−</button>
+            <button aria-label="Zoom in" onClick={() => api.current?.zoomIn()}>+</button>
+            <button aria-label="Zoom out" onClick={() => api.current?.zoomOut()}>−</button>
             <button onClick={reset}>Reset</button>
-            <button onClick={overview}>Ikhtisar</button>
+            <button onClick={overview}>Overview</button>
           </div>
           <div className={s.legend}>
             <b>{L.label} ({L.unit})</b>
             <div className={s.bar} style={{ background: `linear-gradient(90deg,${L.colors.join(",")})` }} />
             <div className={s.lr}><span>{fmt(L.range[0])}</span><span>{fmt(L.range[1])}</span></div>
-            <div className={s.attr}>Titik sampel grid 500 m, digambar sebagai kotak 4 km. Skala tetap untuk semua jendela.</div>
+            <div className={s.attr}>500 m grid sample points, rendered as 4 km squares. Fixed scale across all windows.</div>
           </div>
-          {!data && !error && <div className={s.loading}>Memuat peta…</div>}
+          {!data && !error && <div className={s.loading}>Loading map…</div>}
           {data && (
             <Inspector selection={sel} windows={data.windows} datasets={data.datasets} runId={data.meta.modelRunId} layer={layer}
               onClose={() => setSel(null)} onShowWindow={() => winId && setSel({ kind: "window", id: winId })} onZoom={() => winId && openWindow(winId)}
@@ -116,8 +116,8 @@ export default function ExploreShell() {
           )}
           {error && (
             <div className={s.err} role="alert">
-              Gagal memuat data peta: {error}
-              <button className={s.retry} onClick={retry}>Coba lagi</button>
+              Unable to load map data: {error}
+              <button className={s.retry} onClick={retry}>Try again</button>
             </div>
           )}
         </main>

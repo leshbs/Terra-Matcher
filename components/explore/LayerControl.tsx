@@ -9,7 +9,7 @@ interface Props { value: LayerKey; onChange: (k: LayerKey) => void; opacity: num
 export default function LayerControl({ value, onChange, opacity, onOpacity }: Props) {
   return (
     <section aria-label="Terrain layers">
-      <h2 className={s.h2}>Layer medan</h2>
+      <h2 className={s.h2}>Terrain layers</h2>
       <div role="radiogroup" aria-label="Terrain layer">
         {(Object.keys(LAYERS) as LayerKey[]).map((k) => (
           <button key={k} role="radio" aria-checked={value === k} className={`${s.item} ${value === k ? s.on : ""}`} onClick={() => onChange(k)}>
@@ -18,7 +18,7 @@ export default function LayerControl({ value, onChange, opacity, onOpacity }: Pr
           </button>
         ))}
       </div>
-      <label className={s.op}>Opasitas
+      <label className={s.op}>Opacity
         <input type="range" min={30} max={100} value={Math.round(opacity * 100)} onChange={(e) => onOpacity(+e.target.value / 100)} />
       </label>
     </section>

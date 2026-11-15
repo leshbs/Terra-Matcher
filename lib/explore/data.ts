@@ -14,11 +14,11 @@ async function getJson<T>(url: string): Promise<T> {
 }
 
 function assertCells(fc: FeatureCollection) {
-  if (fc.type !== "FeatureCollection" || !fc.features.length) throw new Error("Layer sel kosong atau bukan FeatureCollection");
+  if (fc.type !== "FeatureCollection" || !fc.features.length) throw new Error("Cell layer is empty or not a FeatureCollection");
   for (const f of fc.features) {
     const p = f.properties as Record<string, unknown> | null;
     if (!p || typeof p.wid !== "string" || ["slope", "rough", "relief"].some((k) => typeof p[k] !== "number")) {
-      throw new Error(`Fitur sel tidak valid: ${JSON.stringify(p)?.slice(0, 80)}`);
+      throw new Error(`Invalid cell feature: ${JSON.stringify(p)?.slice(0, 80)}`);
     }
   }
 }
@@ -27,7 +27,7 @@ async function loadFixtureExplore(): Promise<ExploreData> {
   const manifest = await getJson<{ modelRunId: string; layers: { id: string; path: string }[]; attribution: string[] }>(MANIFEST);
   const path = (id: string) => {
     const l = manifest.layers.find((x) => x.id === id);
-    if (!l) throw new Error(`Layer "${id}" tidak ada di manifest`);
+    if (!l) throw new Error(`Layer "${id}" is missing from the manifest`);
     return l.path;
   };
   const [meta, cells, cands] = await Promise.all([
@@ -38,11 +38,11 @@ async function loadFixtureExplore(): Promise<ExploreData> {
   assertCells(cells);
 
   const runIds = new Set([manifest.modelRunId, meta.meta.modelRunId, ...cands.features.map((f) => f.properties?.modelRunId)]);
-  if (runIds.size !== 1) throw new Error(`Model run tidak konsisten: ${[...runIds].join(", ")}`);
+  if (runIds.size !== 1) throw new Error(`Inconsistent model runs: ${[...runIds].join(", ")}`);
 
   const windows: WindowData[] = meta.data.windows.map((w) => {
     const f = cands.features.find((x) => x.properties?.id === w.id);
-    if (!f) throw new Error(`Jendela ${w.id} tidak ada di candidates.geojson`);
+    if (!f) throw new Error(`Window ${w.id} is missing from candidates.geojson`);
     const p = f.properties!;
     return {
       ...w,
