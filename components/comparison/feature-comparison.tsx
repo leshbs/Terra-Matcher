@@ -18,6 +18,7 @@ type FeatureComparisonProps = {
   candidate: ComparisonCandidate;
   featureDefinitions: Record<FeatureKey, FeatureDefinition>;
   datasetsById: Record<string, DatasetRecord>;
+  dataMode?: "fixture" | "production";
 };
 
 function datasetShortLabel(
@@ -56,7 +57,11 @@ export default function FeatureComparison({
   candidate,
   featureDefinitions,
   datasetsById,
+  dataMode = "fixture",
 }: FeatureComparisonProps) {
+  const valueProvenance =
+    dataMode === "fixture" ? "fixture value" : "model-run value";
+
   return (
     <section
       aria-labelledby="feature-comparison-heading"
@@ -74,10 +79,11 @@ export default function FeatureComparison({
             Feature-by-feature comparison
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-            Raw values retain their units. Body-specific percentiles compare each
-            feature&apos;s relative position within its Earth or Mars population.
-            Similar percentiles do not establish geological or mission-environment
-            equivalence.
+            Each feature shows its raw value and unit alongside a body-specific
+normalised percentile. Percentiles compare relative position within each
+body&apos;s population, so a raw Earth metre is never treated as physically
+equivalent to a raw Mars metre; similar percentiles do not establish
+geological or mission-environment equivalence.
           </p>
         </div>
         <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-xs font-medium text-slate-300">
@@ -138,20 +144,27 @@ export default function FeatureComparison({
                     {reference.name}
                   </p>
                   <div className="mt-3 flex items-end justify-between gap-3">
-                    <p className="font-mono text-2xl font-semibold text-slate-100">
-                      {formatRawValue(
-                        referenceFeature.rawValue,
-                        definition.unitSymbol,
-                      )}
-                    </p>
-                    <p className="text-right text-xs text-slate-400">
-                      percentile{" "}
-                      <span className="font-mono text-slate-200">
+                    <div>
+                      <p className="font-mono text-2xl font-semibold text-slate-100">
+                        {formatRawValue(
+                          referenceFeature.rawValue,
+                          definition.unitSymbol,
+                        )}
+                      </p>
+                      <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500">
+                        Raw · {definition.unit}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-lg font-semibold text-slate-200">
                         {formatNormalizedValue(
                           referenceFeature.normalizedValue,
                         )}
-                      </span>
-                    </p>
+                      </p>
+                      <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500">
+                        Normalised
+                      </p>
+                    </div>
                   </div>
                   <NormalizedBar
                     value={referenceFeature.normalizedValue}
@@ -163,8 +176,8 @@ export default function FeatureComparison({
                       referenceFeature.sourceDatasetId,
                       datasetsById,
                     )}{" "}
-                    · {referenceFeature.analysisResolutionM} m resolution ·
-                    fixture value
+                    · {referenceFeature.analysisResolutionM} m resolution ·{" "}
+                    {valueProvenance}
                   </p>
                 </div>
 
@@ -176,20 +189,27 @@ export default function FeatureComparison({
                     {candidate.name}
                   </p>
                   <div className="mt-3 flex items-end justify-between gap-3">
-                    <p className="font-mono text-2xl font-semibold text-slate-100">
-                      {formatRawValue(
-                        candidateFeature.rawValue,
-                        definition.unitSymbol,
-                      )}
-                    </p>
-                    <p className="text-right text-xs text-slate-400">
-                      percentile{" "}
-                      <span className="font-mono text-slate-200">
+                    <div>
+                      <p className="font-mono text-2xl font-semibold text-slate-100">
+                        {formatRawValue(
+                          candidateFeature.rawValue,
+                          definition.unitSymbol,
+                        )}
+                      </p>
+                      <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500">
+                        Raw · {definition.unit}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-lg font-semibold text-slate-200">
                         {formatNormalizedValue(
                           candidateFeature.normalizedValue,
                         )}
-                      </span>
-                    </p>
+                      </p>
+                      <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500">
+                        Normalised
+                      </p>
+                    </div>
                   </div>
                   <NormalizedBar
                     value={candidateFeature.normalizedValue}
@@ -201,8 +221,8 @@ export default function FeatureComparison({
                       candidateFeature.sourceDatasetId,
                       datasetsById,
                     )}{" "}
-                    · {candidateFeature.analysisResolutionM} m resolution ·
-                    fixture value
+                    · {candidateFeature.analysisResolutionM} m resolution ·{" "}
+                    {valueProvenance}
                   </p>
                 </div>
               </div>

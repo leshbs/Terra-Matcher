@@ -17,7 +17,7 @@ export type ScoreBand = "very-close" | "close" | "mixed" | "distant";
 export const MATCH_DISTANCE_THRESHOLD = 0.1;
 export const PARTIAL_DISTANCE_THRESHOLD = 0.25;
 
-const dataModeSchema = z.literal("fixture");
+const dataModeSchema = z.enum(["fixture", "production"]);
 
 const featureDefinitionSchema = z.object({
   label: z.string().min(1),
@@ -148,7 +148,7 @@ const candidateSchema = locationBaseSchema.extend({
   mismatchPoints: z.array(z.string().min(1)).min(1),
 });
 
-export const comparisonFixtureSchema = z
+const comparisonDatasetBaseSchema = z
   .object({
     schemaVersion: z.literal("1.0.0"),
     dataMode: dataModeSchema,
@@ -163,7 +163,7 @@ export const comparisonFixtureSchema = z
     }),
     datasets: z.array(datasetSchema).min(1),
     scenario: scenarioSchema,
-    candidates: z.array(candidateSchema).length(5),
+    candidates: z.array(candidateSchema).min(1).max(10),
     globalLimitations: z.array(z.string().min(1)).min(1),
   })
   .superRefine((fixture, context) => {
@@ -334,12 +334,41 @@ export const comparisonFixtureSchema = z
     }
   });
 
-export type ComparisonFixture = z.infer<typeof comparisonFixtureSchema>;
-export type ComparisonScenario = ComparisonFixture["scenario"];
-export type ComparisonCandidate = ComparisonFixture["candidates"][number];
+// The backend adapter validates this same payload shape. Production runs may
+// contain 1–10 candidates; the bundled demo fixture is kept stricter below.
+export const comparisonDatasetSchema = comparisonDatasetBaseSchema;
+
+export const comparisonFixtureSchema = comparisonDatasetBaseSchema.refine(
+  (dataset) => dataset.dataMode === "fixture" && dataset.candidates.length === 5,
+  {
+    message:
+      "The bundled demo fixture must use fixture mode and exactly five candidates.",
+    path: ["candidates"],
+  },
+);
+
+export type ComparisonDataset = z.infer<typeof comparisonDatasetBaseSchema>;
+// Backwards-compatible alias for components written during Day 1.
+export type ComparisonFixture = ComparisonDataset;
+export type ComparisonScenario = ComparisonDataset["scenario"];
+export type ComparisonCandidate = ComparisonDataset["candidates"][number];
 export type FeatureContribution = ComparisonCandidate["contributions"][number];
-export type FeatureDefinition = ComparisonFixture["featureDefinitions"][FeatureKey];
-export type DatasetRecord = ComparisonFixture["datasets"][number];
+export type FeatureDefinition =
+  ComparisonDataset["featureDefinitions"][FeatureKey];
+export type DatasetRecord = ComparisonDataset["datasets"][number];
+
+export type ComparisonDataSourceInfo = {
+  mode: "fixture" | "api";
+  label: string;
+  description: string;
+  isFixture: boolean;
+};
+
+export type ComparisonSourceFailure = {
+  code: "CONFIG" | "UNAVAILABLE" | "CONTRACT" | "INVALID_DATA";
+  message: string;
+  detail?: string;
+};
 
 export const FEATURE_STATUS_LABELS: Record<FeatureStatus, string> = {
   match: "Match",
