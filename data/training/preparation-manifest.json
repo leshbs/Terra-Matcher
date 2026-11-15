@@ -4,7 +4,7 @@
   "rawRoot": "data/training/raw",
   "interimRoot": "data/training/interim",
   "outputRoot": "data/training/processed/2026-11-14-mvp-v1",
-  "downloadState": "not-downloaded",
+  "downloadState": "downloaded-and-checksummed",
   "features": [
     {
       "key": "median_slope_deg",

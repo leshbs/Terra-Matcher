@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from copy import deepcopy
+from datetime import UTC, datetime
 import hashlib
 import json
 import math
@@ -43,6 +44,42 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _source_url(path: Path, dataset_id: str) -> str:
+    if dataset_id == "mars-mola-megdr-v2":
+        return f"https://pds-geosciences.wustl.edu/mgs/urn-nasa-pds-mgs_mola_topography_derived/meg128/{path.name}"
+    tile = path.stem
+    return f"https://e4ftl01.cr.usgs.gov/MEASURES/NASADEM_HGT.001/2000.02.11/NASADEM_HGT_{tile}.zip"
+
+
+def _source_metadata(path: Path, dataset_id: str) -> dict[str, Any]:
+    observed_at = datetime.fromtimestamp(path.stat().st_mtime, UTC).isoformat().replace("+00:00", "Z")
+    if dataset_id == "mars-mola-megdr-v2":
+        return {
+            "datasetId": dataset_id,
+            "sourceUrl": _source_url(path, dataset_id),
+            "retrievedAt": None,
+            "retrievalTimestampStatus": "not-recorded; localObservedAt is filesystem evidence only",
+            "localObservedAt": observed_at,
+            "product": "MGS MOLA MEGDR topography, 128 pixels per degree",
+            "productVersion": "PDS4 maintained bundle product 1.1; final MEGDR product version 2.0",
+            "nativeResolution": {"value": 0.4630576672, "unit": "km/pixel"},
+            "unit": "m above MOLA areoid",
+            "crs": "Mars simple cylindrical / equirectangular; 3396 km sphere; central meridian 180 degrees",
+        }
+    return {
+        "datasetId": dataset_id,
+        "sourceUrl": _source_url(path, dataset_id),
+        "retrievedAt": None,
+        "retrievalTimestampStatus": "not-recorded; localObservedAt is filesystem evidence only",
+        "localObservedAt": observed_at,
+        "product": "NASADEM Merged DEM Global 1 arc second",
+        "productVersion": "V001",
+        "nativeResolution": {"value": 1, "unit": "arc-second", "approximateMetersAtEquator": 30},
+        "unit": "m relative to the EGM96 geoid",
+        "crs": "geographic latitude/longitude (EPSG:4326); vertical reference EGM96 geoid",
+    }
 
 
 def _earth_meters_per_degree(latitude: float) -> tuple[float, float]:
@@ -155,8 +192,12 @@ def build_location_features(training_root: Path) -> tuple[list[dict[str, Any]], 
     checksums = {
         "modelRunId": MODEL_RUN_ID,
         "files": [
-            {"path": path.relative_to(training_root).as_posix(), "sha256": _sha256(path)}
-            for paths in used_sources.values()
+            {
+                "path": path.relative_to(training_root).as_posix(),
+                "sha256": _sha256(path),
+                **_source_metadata(path, dataset_id),
+            }
+            for dataset_id, paths in used_sources.items()
             for path in paths
         ],
     }
