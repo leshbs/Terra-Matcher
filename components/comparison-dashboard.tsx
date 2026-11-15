@@ -180,6 +180,12 @@ export default function ComparisonDashboard() {
   >
     Open comparison demo
   </Link>
+  <Link
+    href="/explore"
+    className="ml-3 inline-flex rounded-lg border border-cyan-300 px-4 py-2 font-semibold text-cyan-200 hover:bg-cyan-300/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+  >
+    Open terrain explorer
+  </Link>
   <p className="text-sm text-slate-400">
     Separate synthetic UI fixture with its own scenario, candidates, and scores.
     Not a detailed view of the API ranking below.

@@ -27,12 +27,16 @@ export default function ExploreShell() {
   const [mapVersion, setMapVersion] = useState(0);
   const api = useRef<MapApi | null>(null);
   const winRef = useRef<string | null>(null);
-  winRef.current = winId;
+  useEffect(() => { winRef.current = winId; }, [winId]);
 
   useEffect(() => {
-    setError(null);
     loadExplore().then(setData).catch((e: Error) => setError(e.message));
   }, [attempt]);
+
+  const retry = () => {
+    setError(null);
+    setAttempt((value) => value + 1);
+  };
 
   const openWindow = useCallback((id: string, fly = true) => {
     const w = data?.windows.find((x) => x.id === id);
@@ -113,7 +117,7 @@ export default function ExploreShell() {
           {error && (
             <div className={s.err} role="alert">
               Gagal memuat data peta: {error}
-              <button className={s.retry} onClick={() => setAttempt((n) => n + 1)}>Coba lagi</button>
+              <button className={s.retry} onClick={retry}>Coba lagi</button>
             </div>
           )}
         </main>

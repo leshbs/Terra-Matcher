@@ -40,7 +40,7 @@ export default function MapView(props: Props) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const pr = useRef(props);
-  pr.current = props; // handlers always read the latest props
+  useEffect(() => { pr.current = props; }, [props]); // handlers always read the latest props
   const [loaded, setLoaded] = useState(false);
 
   // Create the map once.

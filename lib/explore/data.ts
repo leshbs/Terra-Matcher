@@ -23,7 +23,7 @@ function assertCells(fc: FeatureCollection) {
   }
 }
 
-export async function loadExplore(): Promise<ExploreData> {
+async function loadFixtureExplore(): Promise<ExploreData> {
   const manifest = await getJson<{ modelRunId: string; layers: { id: string; path: string }[]; attribution: string[] }>(MANIFEST);
   const path = (id: string) => {
     const l = manifest.layers.find((x) => x.id === id);
@@ -53,4 +53,16 @@ export async function loadExplore(): Promise<ExploreData> {
     };
   });
   return { datasets: meta.data.datasets, windows, cells, attribution: manifest.attribution, meta: { modelRunId: manifest.modelRunId } };
+}
+
+const PRODUCTION_SCENARIO_ID = "mars-gale-aeolis-palus-v1";
+
+export async function loadExplore(): Promise<ExploreData> {
+  if (process.env.NEXT_PUBLIC_EXPLORER_DATA_SOURCE === "fixture") {
+    return loadFixtureExplore();
+  }
+  const response = await getJson<{ data: ExploreData; meta: ExploreData["meta"] }>(
+    `/api/scenarios/${PRODUCTION_SCENARIO_ID}/explorer`,
+  );
+  return { ...response.data, meta: response.meta };
 }
