@@ -13,7 +13,7 @@ export interface MapApi {
   zoomOut(): void;
   fitWindow(id: string): void;
   fitOverview(body: Body): void;
-}
+} 
 
 interface Props {
   windows: WindowData[];
