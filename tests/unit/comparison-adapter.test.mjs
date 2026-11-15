@@ -47,7 +47,7 @@ test("adapter exposes fixture and api source switcher knobs", () => {
   assert.match(adapterSource, /COMPARISON_DATA_SOURCE/);
   assert.match(adapterSource, /resolveComparisonSourceMode/);
   assert.match(adapterSource, /loadComparisonBundle/);
-  assert.match(adapterSource, /falling back to fixture/);
+  assert.doesNotMatch(adapterSource, /falling back to fixture/);
   assert.match(dataSource, /loadComparisonBundle/);
   assert.match(dataSource, /getRankedCandidatesFromDataset/);
 });

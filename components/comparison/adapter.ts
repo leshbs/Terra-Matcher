@@ -222,29 +222,7 @@ async function loadComparisonBundleUncached(options?: {
           "Comparison API failed for an unknown reason.",
         );
 
-    if (options?.strict) {
-      throw new Error(failure.message);
-    }
-
-    console.warn(
-      "[comparison-adapter] API source failed; falling back to fixture.",
-      failure,
-    );
-
-    warnings.push(
-      `${failure.message} Showing the local fixture until the backend payload is available.`,
-    );
-
-    return {
-      dataset: loadFixtureDataset(),
-      source: {
-        ...SOURCE_INFO.fixture,
-        label: "Fixture fallback",
-        description: `${SOURCE_INFO.fixture.description} Active because the API source failed.`,
-      },
-      warnings,
-      failure,
-    };
+    throw new Error(failure.message);
   }
 }
 

@@ -19,10 +19,12 @@ const validContext = {
     transformation_version: "ecdf-midrank-v1",
     input_dataset_ids: ["earth-nasadem-hgt-v001", "mars-mola-megdr-v2"],
   },
-  candidateScores: [],
-  contributions: [],
+  candidateScores: Array.from({ length: 5 }, (_, index) => ({ model_run_id: "2026-11-14-mvp-v1", candidate_id: `candidate-${index + 1}`, rank: index + 1 })),
+  contributions: Array.from({ length: 5 }, (_, candidateIndex) =>
+    Array.from({ length: 3 }, (_, featureIndex) => ({ model_run_id: "2026-11-14-mvp-v1", candidate_id: `candidate-${candidateIndex + 1}`, feature_key: `feature-${featureIndex}` })),
+  ).flat(),
   evidence: [],
-  locationProfiles: [],
+  locationProfiles: [{ location_kind: "scenario", location_id: "mars-gale-aeolis-palus-v1" }, ...Array.from({ length: 5 }, (_, index) => ({ location_kind: "candidate", location_id: `candidate-${index + 1}` }))],
   datasets: [],
 };
 
