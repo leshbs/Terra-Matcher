@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
@@ -158,6 +159,18 @@ export default function ComparisonDashboard() {
             reference scenario. Scores are not probabilities or landing-site
             recommendations.
           </p>
+          <div className="space-y-2 pt-2">
+  <Link
+    href="/compare"
+    className="inline-flex rounded-lg bg-cyan-300 px-4 py-2 font-semibold text-slate-950 hover:bg-cyan-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+  >
+    Open comparison demo
+  </Link>
+  <p className="text-sm text-slate-400">
+    Separate synthetic UI fixture with its own scenario, candidates, and scores.
+    Not a detailed view of the API ranking below.
+  </p>
+</div>
         </header>
 
         {current.status === "loading" && (
