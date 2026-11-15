@@ -96,9 +96,69 @@ function profileFeatures(features, manifest, locationId, body) {
   }));
 }
 
+export function validateExplorerGridSamples(samples, locationIds, manifest) {
+  if (!Array.isArray(locationIds) || locationIds.length !== 6 || new Set(locationIds).size !== 6) {
+    throw new Error('Explorer seed requires exactly six unique locations.');
+  }
+
+  if (!Array.isArray(samples)) throw new Error('Explorer seed samples must be an array.');
+
+  const locations = new Set(locationIds);
+  const datasetIds = new Set(manifest?.inputDatasetIds);
+  const samplesByLocation = new Map(locationIds.map((locationId) => [locationId, []]));
+  const sampleIds = new Set();
+
+  for (const sample of samples) {
+    if (!locations.has(sample.windowId)) {
+      throw new Error(`Explorer seed sample references an unknown location: ${sample.windowId}`);
+    }
+    if (sample.modelRunId !== manifest?.modelRunId) {
+      throw new Error(`Explorer seed model run mismatch: ${sample.id}`);
+    }
+    if (!datasetIds.has(sample.datasetId)) {
+      throw new Error(`Explorer seed dataset ID mismatch: ${sample.id}`);
+    }
+    if (sampleIds.has(sample.id)) {
+      throw new Error(`Explorer seed has duplicate sample ID: ${sample.id}`);
+    }
+    if (sample.qualityFlag !== 'source-backed-derived') {
+      throw new Error(`Explorer seed quality flag must be source-backed-derived: ${sample.id}`);
+    }
+
+    for (const [name, value] of Object.entries({
+      offsetEastKm: sample.offsetEastKm,
+      offsetNorthKm: sample.offsetNorthKm,
+      slope: sample.slope,
+      roughness: sample.roughness,
+      relativeRelief: sample.relativeRelief,
+    })) {
+      if (!Number.isFinite(value)) throw new Error(`Explorer seed requires finite ${name}: ${sample.id}`);
+    }
+
+    samplesByLocation.get(sample.windowId).push(sample);
+    sampleIds.add(sample.id);
+  }
+
+  for (const [locationId, locationSamples] of samplesByLocation) {
+    if (locationSamples.length !== 25) {
+      throw new Error(`Explorer seed requires exactly 25 samples for location: ${locationId}`);
+    }
+
+    const offsets = new Set();
+    for (const sample of locationSamples) {
+      const offset = `${sample.offsetEastKm},${sample.offsetNorthKm}`;
+      if (offsets.has(offset)) throw new Error(`Explorer seed has duplicate offsets for location: ${locationId}`);
+      offsets.add(offset);
+    }
+  }
+
+  return samples;
+}
+
 export async function buildProductionSeed({ trainingRoot, outputPath }) {
   const input = await loadInput(trainingRoot);
   validateProductionEvidence(input);
+  const gridSamples = validateExplorerGridSamples(input.grid, input.locations.map((location) => location.id), input.manifest);
   const featureValuesByLocation = indexFeatureValues(input.features);
 
   const lines = ['begin;'];
@@ -162,8 +222,7 @@ export async function buildProductionSeed({ trainingRoot, outputPath }) {
     ], '(model_run_id, location_id) do update set operational_hypothesis = excluded.operational_hypothesis, limitations = excluded.limitations, source_dataset_ids = excluded.source_dataset_ids'));
   }
 
-  if (input.grid.length !== 150) throw new Error("Explorer seed requires exactly 150 samples.");
-  for (const sample of input.grid) {
+  for (const sample of gridSamples) {
     lines.push(insert('explorer_grid_samples', ['id', 'model_run_id', 'location_id', 'dataset_id', 'offset_east_km', 'offset_north_km', 'slope', 'roughness', 'relative_relief', 'quality_flag'], [
       sqlString(sample.id), sqlString(sample.modelRunId), sqlString(sample.windowId), sqlString(sample.datasetId), sample.offsetEastKm, sample.offsetNorthKm, sample.slope, sample.roughness, sample.relativeRelief, sqlString(sample.qualityFlag),
     ], '(id) do update set slope = excluded.slope, roughness = excluded.roughness, relative_relief = excluded.relative_relief, quality_flag = excluded.quality_flag'));

@@ -12,7 +12,7 @@ type Profile = {
   operational_hypothesis: string;
   limitations: string[];
   source_dataset_ids: string[];
-  features: Record<string, { rawValue: number }>;
+  features: Record<string, { rawValue: number; sourceDatasetId: string }>;
 };
 
 const featureValue = (profile: Profile, key: string) => {
@@ -39,26 +39,38 @@ export function buildExplorerAssemblyContext(context: ProductionScenarioContext)
       resolution: JSON.stringify(dataset.native_resolution), unit: String(dataset.unit), license: "See source citation.",
       citation: String(dataset.citation), limitations: Array.isArray(dataset.limitations) ? dataset.limitations.map(String) : [],
     })),
-    windows: profiles.map((profile) => {
+    windows: profiles.slice().sort((left, right) => {
+      if (left.location_kind === "scenario") return -1;
+      if (right.location_kind === "scenario") return 1;
+      return (scoreByCandidate.get(left.location_id)?.rank ?? Number.MAX_SAFE_INTEGER)
+        - (scoreByCandidate.get(right.location_id)?.rank ?? Number.MAX_SAFE_INTEGER);
+    }).map((profile) => {
       const score = scoreByCandidate.get(profile.location_id);
       const matched = contributionByCandidate.get(profile.location_id) ?? [];
       const strongest = matched.slice().sort((left, right) => left.weighted_contribution - right.weighted_contribution)[0]?.feature_key;
       const mismatch = matched.slice().sort((left, right) => right.weighted_contribution - left.weighted_contribution)[0]?.feature_key;
-      const datasetId = profile.source_dataset_ids[0];
+      const datasetId = profile.features.median_slope_deg?.sourceDatasetId;
       if (!datasetId) throw new Error(`Explorer profile ${profile.location_id} has no source dataset.`);
-      return {
+      const shared = {
         id: profile.location_id, scenarioId: context.scenario.id, name: profile.location_kind === "scenario" ? context.scenario.name : profile.summary,
         kind: profile.location_kind, body: profile.location_kind === "scenario" ? "mars" as const : "earth" as const,
         center: [profile.longitude, profile.latitude] as [number, number], datasetId, hypothesis: profile.operational_hypothesis,
         limitations: profile.limitations, features: {
           slope: featureValue(profile, "median_slope_deg"), rough: featureValue(profile, "terrain_roughness_m"), relief: featureValue(profile, "relative_relief_m"),
         },
-        ...(score ? { rank: score.rank, score: score.similarity_score, coverage: score.data_coverage } : {}),
-        ...(matched.length ? {
+      };
+      if (profile.location_kind === "candidate") {
+        if (!score) throw new Error(`Explorer candidate ${profile.location_id} has no ranking score.`);
+        if (matched.length !== 3 || !strongest || !mismatch) {
+          throw new Error(`Explorer candidate ${profile.location_id} has incomplete ranking evidence.`);
+        }
+        return {
+          ...shared, rank: score.rank, score: score.similarity_score, coverage: score.data_coverage,
           contributions: matched.map((item) => ({ featureKey: item.feature_key, candidateRaw: item.candidate_raw_value, referenceRaw: item.reference_raw_value, weightedContribution: item.weighted_contribution })),
           strongest, mismatch,
-        } : {}),
-      };
+        };
+      }
+      return shared;
     }),
   };
 }

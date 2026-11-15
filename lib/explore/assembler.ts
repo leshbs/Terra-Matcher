@@ -3,6 +3,8 @@ import type {
   ExplorerAssemblyContext,
   ExplorerSampleInput,
 } from "./contracts";
+// @ts-expect-error Node's strip-types test runner requires the source extension.
+import { ExplorerApiEnvelopeSchema } from "./contracts.ts";
 import type { CellProps, ExploreData, GridRanges, LayerKey, Point, WindowData } from "./types";
 
 const KM_PER_DEGREE = { mars: 59.27, earth: 111.19 } as const;
@@ -97,7 +99,7 @@ export function assembleExplorerDataset(
     return resolvedWindow;
   });
 
-  return {
+  const envelope = {
     data: {
       datasets: Object.fromEntries(context.datasets.map((dataset) => [dataset.id, dataset])),
       windows,
@@ -111,4 +113,11 @@ export function assembleExplorerDataset(
       dataMode: "production",
     },
   };
+
+  const parsed = ExplorerApiEnvelopeSchema.safeParse(envelope);
+  if (!parsed.success) {
+    throw new Error("Invalid Explorer API envelope.", { cause: parsed.error });
+  }
+
+  return parsed.data;
 }

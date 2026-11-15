@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { assembleExplorerDataset } from "../../lib/explore/assembler.ts";
+import { ExplorerApiEnvelopeSchema } from "../../lib/explore/contracts.ts";
 
 const dataset = {
   id: "mars-mola-megdr-v2",
@@ -46,6 +47,27 @@ function context(status = "ready") {
       features: { slope: 4, rough: 30, relief: 500 },
     }],
   };
+}
+
+function earthCandidateContext(overrides = {}) {
+  const candidate = {
+    ...context().windows[0],
+    body: "earth",
+    kind: "candidate",
+    rank: 1,
+    score: 0.82,
+    coverage: 1,
+    contributions: [
+      { featureKey: "slope", candidateRaw: 4, referenceRaw: 4, weightedContribution: 0.1 },
+      { featureKey: "rough", candidateRaw: 30, referenceRaw: 30, weightedContribution: 0.2 },
+      { featureKey: "relief", candidateRaw: 500, referenceRaw: 500, weightedContribution: 0.3 },
+    ],
+    strongest: "slope",
+    mismatch: "relief",
+    ...overrides,
+  };
+
+  return { ...context(), windows: [candidate] };
 }
 
 test("assembles ready-run samples into local windows, cell geometry, ranges, and dataset metadata", () => {
@@ -97,4 +119,54 @@ test("rejects a sample whose window is absent from the selected context", () => 
     () => assembleExplorerDataset(context(), unknownWindowSamples),
     /does not belong to the selected explorer context/i,
   );
+});
+
+test("rejects an assembled payload containing non-finite runtime sample values", () => {
+  const invalidSamples = samples();
+  invalidSamples[0].slope = Number.NaN;
+
+  assert.throws(
+    () => assembleExplorerDataset(context(), invalidSamples),
+    /invalid explorer api envelope/i,
+  );
+});
+
+test("rejects Earth candidates without complete ranking and contribution evidence", () => {
+  assert.throws(
+    () => assembleExplorerDataset(earthCandidateContext({ contributions: undefined }), samples()),
+    /invalid explorer api envelope/i,
+  );
+});
+
+test("Explorer API envelope schema rejects malformed windows, cells, ranges, and non-production data", () => {
+  const valid = assembleExplorerDataset(context(), samples());
+  const malformedWindow = structuredClone(valid);
+  malformedWindow.data.windows[0].points.pop();
+  const malformedCell = structuredClone(valid);
+  malformedCell.data.cells.features[0].geometry.coordinates[0].pop();
+  const malformedRange = structuredClone(valid);
+  malformedRange.data.gridRanges.slope = [9, 1];
+  const fixtureEnvelope = structuredClone(valid);
+  fixtureEnvelope.meta.dataMode = "fixture";
+
+  for (const payload of [malformedWindow, malformedCell, malformedRange, fixtureEnvelope]) {
+    assert.equal(ExplorerApiEnvelopeSchema.safeParse(payload).success, false);
+  }
+});
+
+test("Explorer API envelope schema requires evidence per Earth candidate and validates window references", () => {
+  const candidate = assembleExplorerDataset(earthCandidateContext(), samples());
+  const missingCandidateScore = structuredClone(candidate);
+  delete missingCandidateScore.data.windows[0].score;
+  const incompleteCandidateEvidence = structuredClone(candidate);
+  incompleteCandidateEvidence.data.windows[0].contributions.pop();
+  const missingDataset = structuredClone(candidate);
+  missingDataset.data.windows[0].datasetId = "missing-dataset";
+  const cellsMissingOneWindow = structuredClone(candidate);
+  cellsMissingOneWindow.data.windows.push({ ...cellsMissingOneWindow.data.windows[0], id: "second-window" });
+  cellsMissingOneWindow.data.cells.features.push(...structuredClone(cellsMissingOneWindow.data.cells.features));
+
+  for (const payload of [missingCandidateScore, incompleteCandidateEvidence, missingDataset, cellsMissingOneWindow]) {
+    assert.equal(ExplorerApiEnvelopeSchema.safeParse(payload).success, false);
+  }
 });
