@@ -32,6 +32,8 @@ export async function GET() {
     const { data, error } = await supabase
       .from("scenarios")
       .select("id, name, body, description, data_mode")
+      .eq("id", "mars-reference-fixture-v1")
+      .eq("data_mode", "fixture")
       .order("id", { ascending: true });
 
     if (error) {
