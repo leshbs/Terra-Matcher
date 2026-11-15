@@ -174,6 +174,33 @@ def _candidates_geojson(
     return {"type": "FeatureCollection", "features": features}
 
 
+def _explorer_grid_samples(study_features: list[dict[str, Any]]) -> dict[str, Any]:
+    grouped = _group_features(study_features)
+    samples: list[dict[str, Any]] = []
+    for study_population_id, features in sorted(grouped.items()):
+        if set(features) != set(FEATURE_WEIGHTS):
+            raise ValueError(f"study population has incomplete features: {study_population_id}")
+        records = list(features.values())
+        if any(record["qualityFlag"] != "source-backed-derived" for record in records):
+            raise ValueError(f"study population is not source-backed-derived: {study_population_id}")
+        first = records[0]
+        samples.append(
+            {
+                "id": study_population_id,
+                "windowId": first["parentLocationId"],
+                "modelRunId": MODEL_RUN_ID,
+                "datasetId": first["sourceDatasetId"],
+                "offsetEastKm": first["offsetEastKm"],
+                "offsetNorthKm": first["offsetNorthKm"],
+                "slope": features["median_slope_deg"]["rawValue"],
+                "roughness": features["terrain_roughness_m"]["rawValue"],
+                "relativeRelief": features["relative_relief_m"]["rawValue"],
+                "qualityFlag": "source-backed-derived",
+            }
+        )
+    return {"modelRunId": MODEL_RUN_ID, "samples": samples}
+
+
 def _validate_outputs(outputs: dict[str, Any]) -> dict[str, Any]:
     rankings = outputs["rankings"]
     contributions = outputs["contributions"]
@@ -197,6 +224,8 @@ def _validate_outputs(outputs: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("candidate GeoJSON is missing model provenance")
     if any("rank" not in feature["properties"] for feature in candidates):
         raise ValueError("candidate GeoJSON is missing candidate rank")
+    if len(outputs["explorerGrid"]["samples"]) != 150:
+        raise ValueError("Explorer grid must include 25 samples for each of six locations")
     return {
         "modelRunId": MODEL_RUN_ID,
         "status": "passed",
@@ -265,7 +294,8 @@ def build_ranked_outputs(
     for index, ranking in enumerate(rankings, start=1):
         ranking["rank"] = index
     geojson = _candidates_geojson(locations, rankings, evidence)
-    outputs = {"studyFeatures": study_features, "manifest": manifest, "features": enriched_features, "rankings": rankings, "contributions": contributions, "evidence": evidence, "geojson": geojson}
+    explorer_grid = _explorer_grid_samples(study_features)
+    outputs = {"studyFeatures": study_features, "manifest": manifest, "features": enriched_features, "rankings": rankings, "contributions": contributions, "evidence": evidence, "geojson": geojson, "explorerGrid": explorer_grid}
     validation = _validate_outputs(outputs)
     _write_json(output_root / "study-population-features.json", {"modelRunId": MODEL_RUN_ID, "features": study_features})
     _write_json(output_root / "model_manifest.json", manifest)
@@ -274,6 +304,7 @@ def build_ranked_outputs(
     _write_json(output_root / "ranking-contributions.json", {"modelRunId": MODEL_RUN_ID, "contributions": contributions})
     _write_json(output_root / "location-evidence.json", {"modelRunId": MODEL_RUN_ID, "evidence": evidence})
     _write_json(output_root / "candidates.geojson", geojson)
+    _write_json(output_root / "explorer-grid-samples.json", explorer_grid)
     _write_json(output_root / "validation-report.json", validation)
     outputs["validation"] = validation
     return outputs
