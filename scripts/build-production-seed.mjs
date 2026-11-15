@@ -225,7 +225,7 @@ export async function buildProductionSeed({ trainingRoot, outputPath }) {
   for (const sample of gridSamples) {
     lines.push(insert('explorer_grid_samples', ['id', 'model_run_id', 'location_id', 'dataset_id', 'offset_east_km', 'offset_north_km', 'slope', 'roughness', 'relative_relief', 'quality_flag'], [
       sqlString(sample.id), sqlString(sample.modelRunId), sqlString(sample.windowId), sqlString(sample.datasetId), sample.offsetEastKm, sample.offsetNorthKm, sample.slope, sample.roughness, sample.relativeRelief, sqlString(sample.qualityFlag),
-    ], '(id) do update set slope = excluded.slope, roughness = excluded.roughness, relative_relief = excluded.relative_relief, quality_flag = excluded.quality_flag'));
+    ], '(model_run_id, location_id, offset_east_km, offset_north_km) do update set id = excluded.id, dataset_id = excluded.dataset_id, slope = excluded.slope, roughness = excluded.roughness, relative_relief = excluded.relative_relief, quality_flag = excluded.quality_flag'));
   }
 
   lines.push('commit;');
