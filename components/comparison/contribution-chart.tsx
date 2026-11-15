@@ -27,6 +27,10 @@ type ContributionChartProps = {
   candidateName: string;
   contributions: FeatureContribution[];
   featureDefinitions: Record<FeatureKey, FeatureDefinition>;
+  /** When true, bars reflect exploratory weight overrides. */
+  exploratory?: boolean;
+  officialScore?: number;
+  exploratoryScore?: number;
 };
 
 type ChartDatum = {
@@ -53,6 +57,9 @@ export default function ContributionChart({
   candidateName,
   contributions,
   featureDefinitions,
+  exploratory = false,
+  officialScore,
+  exploratoryScore,
 }: ContributionChartProps) {
   const data: ChartDatum[] = FEATURE_KEYS.map((key) => {
     const contribution = contributions.find(
@@ -106,10 +113,33 @@ export default function ContributionChart({
             score of 100. A shorter bar means a closer match.
           </p>
         </div>
-        <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-xs font-medium text-slate-300">
-          Weighted L1 distance
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {exploratory && (
+            <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-100">
+              Exploratory weights
+            </span>
+          )}
+          <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-xs font-medium text-slate-300">
+            Weighted L1 distance
+          </span>
+        </div>
       </div>
+
+      {exploratory &&
+        officialScore !== undefined &&
+        exploratoryScore !== undefined && (
+          <p className="mt-3 rounded-xl border border-amber-400/25 bg-amber-400/[0.06] px-3 py-2 text-xs text-amber-100">
+            Chart uses your weight sliders. Official model-run score stays{" "}
+            <span className="font-mono font-semibold">
+              {officialScore.toFixed(1)}
+            </span>
+            ; exploratory score is{" "}
+            <span className="font-mono font-semibold">
+              {exploratoryScore.toFixed(1)}
+            </span>
+            .
+          </p>
+        )}
 
       <div
         className="mt-5 h-72 w-full"

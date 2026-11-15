@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import ComparisonWorkspace from "@/components/comparison/comparison-workspace";
 import {
   comparisonFixture,
-  getComparisonView,
+  getComparisonBundle,
+  getComparisonViewFromDataset,
 } from "@/components/comparison/data";
 
 // Every valid scenario/candidate pair is prerendered via generateStaticParams,
@@ -20,6 +21,8 @@ type ComparisonPageProps = {
 };
 
 export function generateStaticParams() {
+  // Static params come from the local fixture so builds never depend on the
+  // live API. Runtime pages still load through the adapter switcher.
   return comparisonFixture.candidates.map((candidate) => ({
     scenarioId: comparisonFixture.scenario.id,
     candidateId: candidate.id,
@@ -30,7 +33,8 @@ export async function generateMetadata({
   params,
 }: ComparisonPageProps): Promise<Metadata> {
   const { scenarioId, candidateId } = await params;
-  const view = getComparisonView(scenarioId, candidateId);
+  const { dataset } = await getComparisonBundle({ scenarioId });
+  const view = getComparisonViewFromDataset(dataset, scenarioId, candidateId);
 
   if (!view) {
     return {
@@ -48,7 +52,12 @@ export default async function ComparisonPage({
   params,
 }: ComparisonPageProps) {
   const { scenarioId, candidateId } = await params;
-  const view = getComparisonView(scenarioId, candidateId);
+  const bundle = await getComparisonBundle({ scenarioId });
+  const view = getComparisonViewFromDataset(
+    bundle.dataset,
+    scenarioId,
+    candidateId,
+  );
 
   if (!view) {
     notFound();
@@ -58,7 +67,9 @@ export default async function ComparisonPage({
     <main className="min-h-screen bg-slate-950 px-4 py-8 font-sans text-slate-100 sm:px-6 sm:py-10 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <ComparisonWorkspace
-          fixture={comparisonFixture}
+          dataset={bundle.dataset}
+          source={bundle.source}
+          warnings={bundle.warnings}
           candidate={view.candidate}
           candidates={view.candidates}
         />
