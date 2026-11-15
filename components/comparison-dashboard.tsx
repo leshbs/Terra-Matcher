@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { z } from "zod";
 
 const dataModeSchema = z.enum(["fixture", "production"]);
