@@ -3,6 +3,8 @@ import { z } from "zod";
 import { createPublicSupabaseClient } from "@/lib/supabase/public";
 import { buildProductionCandidates } from "@/lib/terrain-evidence";
 
+// Compatibility endpoint for one release. New comparison clients use /rankings.
+
 // Explicit fixture selection. Never use this run for production data.
 const FIXTURE_SCENARIO_ID = "mars-reference-fixture-v1";
 const FIXTURE_RUN_ID = "fixture-run-v1";

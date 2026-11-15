@@ -36,8 +36,11 @@ export default function MapView(props: Props) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const pr = useRef(props);
-  pr.current = props; // handlers always read the latest props
   const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    pr.current = props; // map event handlers always read the latest props
+  }, [props]);
 
   // Create the map once.
   useEffect(() => {
@@ -65,7 +68,7 @@ export default function MapView(props: Props) {
       map.addLayer({ id: "cell-sel", type: "line", source: "cells", filter: ["==", ["get", "id"], ""], paint: { "line-color": "#fff", "line-width": 3 } });
       map.addLayer({ id: "win-sel", type: "circle", source: "wins", filter: ["==", ["get", "id"], ""], paint: { "circle-radius": 13, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#fff", "circle-stroke-width": 2, "circle-opacity": FADE, "circle-stroke-opacity": FADE } });
       map.addLayer({ id: "win-pts", type: "circle", source: "wins", paint: { "circle-radius": 7, "circle-color": ["match", ["get", "body"], "mars", "#e0693f", "#2fb5a8"], "circle-stroke-color": "#fff", "circle-stroke-width": 2, "circle-opacity": FADE, "circle-stroke-opacity": FADE } });
-      props.onReady({
+      pr.current.onReady({
         zoomIn: () => map.zoomIn(),
         zoomOut: () => map.zoomOut(),
         fitWindow: (id) => { const w = pr.current.windows.find((x) => x.id === id); if (w) map.fitBounds(windowBounds(w), { padding: pad(), duration: 900 }); },
@@ -92,7 +95,6 @@ export default function MapView(props: Props) {
     map.on("mousemove", (e) => { map.getCanvas().style.cursor = hit(e.point, ["win-pts", "cells-fill"], 9).length ? "pointer" : ""; });
 
     return () => { map.remove(); mapRef.current = null; setLoaded(false); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sources follow the selected body.

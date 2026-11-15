@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { loadExplore } from "@/lib/explore/data";
+import { loadExplore, resolveExploreSourceMode } from "@/lib/explore/data";
 import { LAYERS, fmt } from "@/lib/explore/layers";
 import type { Body, CellProps, ExploreData, LayerKey, Selection } from "@/lib/explore/types";
 import type { MapApi } from "./MapView";
@@ -17,6 +17,9 @@ const MARS_ID = "mars-gale-aeolis-palus-v1";
 export default function ExploreShell() {
   const [data, setData] = useState<ExploreData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [fixtureMode, setFixtureMode] = useState(false);
   const [body, setBody] = useState<Body>("mars");
   const [winId, setWinId] = useState<string | null>(null);
   const [sel, setSel] = useState<Selection>(null);
@@ -25,9 +28,30 @@ export default function ExploreShell() {
   const [mapVersion, setMapVersion] = useState(0);
   const api = useRef<MapApi | null>(null);
   const winRef = useRef<string | null>(null);
-  winRef.current = winId;
 
-  useEffect(() => { loadExplore().then(setData).catch((e: Error) => setError(e.message)); }, []);
+  useEffect(() => { winRef.current = winId; }, [winId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadExplore()
+      .then((nextData) => {
+        if (cancelled) return;
+        setData(nextData);
+        setFixtureMode(resolveExploreSourceMode() === "fixture");
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled) setError(reason instanceof Error ? reason.message : "Explorer data could not be loaded.");
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [reloadKey]);
+
+  const retryLoad = () => {
+    setLoading(true);
+    setError(null);
+    setData(null);
+    setReloadKey((key) => key + 1);
+  };
 
   const openWindow = useCallback((id: string, fly = true) => {
     const w = data?.windows.find((x) => x.id === id);
@@ -56,6 +80,7 @@ export default function ExploreShell() {
         <aside className={s.side}>
           <h1>Terra Analog Explorer</h1>
           <p className={s.sub}>Peta medan interaktif untuk satu skenario Mars dan lima kandidat Bumi.</p>
+          {fixtureMode && <p className={s.note} role="status"><b>Mode demo:</b> memakai fixture lokal, bukan data backend.</p>}
           <div className={s.seg} role="group" aria-label="Benda langit">
             {(["mars", "earth"] as Body[]).map((b) => (
               <button key={b} className={body === b ? s.on : ""} onClick={() => switchBody(b)}>{b === "mars" ? "Mars" : "Bumi"}</button>
@@ -73,6 +98,7 @@ export default function ExploreShell() {
         </aside>
 
         <main className={s.mapwrap}>
+          {loading && <div className={s.err} role="status">Memuat data peta…</div>}
           {data && (
             <MapView
               windows={data.windows} body={body} activeWindowId={winId}
@@ -84,6 +110,7 @@ export default function ExploreShell() {
               onClearSelection={() => setSel(null)}
             />
           )}
+          {data && data.windows.length === 0 && <div className={s.err} role="status">Data Explorer tersedia, tetapi belum memiliki titik sampel untuk skenario ini.</div>}
           <div className={s.ctl}>
             <button aria-label="Perbesar" onClick={() => api.current?.zoomIn()}>+</button>
             <button aria-label="Perkecil" onClick={() => api.current?.zoomOut()}>−</button>
@@ -100,7 +127,7 @@ export default function ExploreShell() {
             <Inspector selection={sel} windows={data.windows} datasets={data.datasets} runId={data.meta.modelRunId} layer={layer}
               onClose={() => setSel(null)} onShowWindow={() => winId && setSel({ kind: "window", id: winId })} onZoom={() => winId && openWindow(winId)} />
           )}
-          {error && <div className={s.err} role="alert">Gagal memuat data peta: {error}</div>}
+          {error && <div className={s.err} role="alert">Gagal memuat data peta: {error} <button onClick={retryLoad}>Coba lagi</button></div>}
         </main>
       </div>
     </div>

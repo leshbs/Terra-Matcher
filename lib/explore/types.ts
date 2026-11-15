@@ -1,3 +1,5 @@
+import type { FeatureCollection, Polygon } from "geojson";
+
 export type Body = "mars" | "earth";
 export type LayerKey = "slope" | "rough" | "relief";
 
@@ -16,7 +18,17 @@ export interface DatasetInfo {
   id: string; short: string; provider: string; resolution: string; unit: string;
   license: string; citation: string; limitations: string[];
 }
-export interface ExploreData { datasets: Record<string, DatasetInfo>; windows: WindowData[]; meta: { modelRunId: string } }
+export type ExplorerCells = FeatureCollection<Polygon, CellProps>;
+export type GridRanges = Record<LayerKey, [number, number]>;
+
+export interface ExploreData {
+  datasets: Record<string, DatasetInfo>;
+  windows: WindowData[];
+  cells: ExplorerCells;
+  gridRanges: GridRanges;
+  attribution?: string[];
+  meta: { modelRunId: string; modelVersion?: string; dataMode?: "production" };
+}
 
 /** Properties carried by each GeoJSON cell polygon. */
 export interface CellProps { id: string; wid: string; e: number; n: number; slope: number; rough: number; relief: number; lon: number; lat: number }
