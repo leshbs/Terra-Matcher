@@ -90,6 +90,15 @@ def synthetic_documents():
                 "normalizedWeight": weight,
                 "weightedContribution": weight * 0.016,
             })
+    ranking_by_id = {
+        row["candidateLocationId"]: row for row in rankings
+    }
+    for feature in geo_features:
+        properties = feature["properties"]
+        if properties["kind"] == "candidate":
+            ranking = ranking_by_id[properties["id"]]
+            for field in ("similarityScore", "dataCoverage", "rank"):
+                properties[field] = ranking[field]
 
     documents["candidates.geojson"] = {
         "type": "FeatureCollection",
@@ -99,6 +108,33 @@ def synthetic_documents():
     documents["model_manifest.json"]["transforms"] = transforms
     documents["rankings.json"]["rankings"] = rankings
     documents["ranking-contributions.json"]["contributions"] = contributions
+    study_features = []
+    for parent_id in location_ids:
+        source_id = (
+            "test-mars-source" if parent_id == reference_id
+            else "test-earth-source"
+        )
+        for sample_index in range(25):
+            sample_id = f"{parent_id}:study:{sample_index}"
+            for key in WEIGHTS:
+                study_features.append({
+                    "locationId": sample_id,
+                    "studyPopulationId": sample_id,
+                    "parentLocationId": parent_id,
+                    "featureKey": key,
+                    "rawValue": 2.0,
+                    "qualityFlag": "source-backed-derived",
+                    "coverage": 1.0,
+                    "analysisResolutionM": 500,
+                    "localWindowKm": 3,
+                    "sourceDatasetId": source_id,
+                })
+    documents["study-population-features.json"]["features"] = study_features
+    for transform in transforms.values():
+        transform["sourceDatasetIds"] = [
+            f"test-{transform['body']}-source"
+        ]
+
     # Other documents contain only run identity on purpose:
     # their detailed contents are outside the current validator's scope.
     return documents
@@ -197,6 +233,97 @@ class ValidateImportPackageTests(unittest.TestCase):
         self.documents["rankings.json"]["rankings"][0]["rank"] = 2
         self.write_documents()
         with self.assertRaisesRegex(ValueError, "incorrect rank"):
+            validate_package(self.root)
+
+    def test_population_value_mismatch_is_rejected(self):
+        self.documents["study-population-features.json"]["features"][0]["rawValue"] = 2.1
+        self.write_documents()
+        with self.assertRaisesRegex(ValueError, "differs from manifest samples"):
+            validate_package(self.root)
+
+    def test_duplicate_population_feature_is_rejected(self):
+        rows = self.documents["study-population-features.json"]["features"]
+        rows.append(dict(rows[0]))
+        self.write_documents()
+        with self.assertRaisesRegex(ValueError, "Duplicate record"):
+            validate_package(self.root)
+
+    def test_unknown_population_parent_is_rejected(self):
+        self.documents["study-population-features.json"]["features"][0]["parentLocationId"] = "unknown"
+        self.write_documents()
+        with self.assertRaisesRegex(ValueError, "unknown parent"):
+            validate_package(self.root)
+
+    def test_population_source_mismatch_is_rejected(self):
+        self.documents["study-population-features.json"]["features"][0]["sourceDatasetId"] = "wrong-source"
+        self.write_documents()
+        with self.assertRaisesRegex(ValueError, "source IDs differ"):
+            validate_package(self.root)
+
+    def test_boolean_population_value_is_rejected(self):
+        self.documents["study-population-features.json"]["features"][0]["rawValue"] = True
+        self.write_documents()
+        with self.assertRaisesRegex(ValueError, "finite number"):
+            validate_package(self.root)
+
+    def test_geojson_score_mismatch_is_rejected(self):
+        properties = self.documents["candidates.geojson"]["features"][1]["properties"]
+        properties["similarityScore"] = 50
+        self.write_documents()
+        with self.assertRaisesRegex(ValueError, "GeoJSON similarityScore"):
+            validate_package(self.root)
+
+    def test_geojson_coverage_mismatch_is_rejected(self):
+        properties = self.documents["candidates.geojson"]["features"][1]["properties"]
+        properties["dataCoverage"] = 0.5
+        self.write_documents()
+        with self.assertRaisesRegex(ValueError, "GeoJSON dataCoverage"):
+            validate_package(self.root)
+
+    def test_geojson_missing_score_is_rejected(self):
+        properties = self.documents["candidates.geojson"]["features"][1]["properties"]
+        del properties["similarityScore"]
+        self.write_documents()
+        with self.assertRaisesRegex(ValueError, "GeoJSON missing similarityScore"):
+            validate_package(self.root)
+
+    def test_geojson_invalid_rank_is_rejected(self):
+        properties = self.documents["candidates.geojson"]["features"][1]["properties"]
+        for value in (2, True, 1.0, None):
+            with self.subTest(value=value):
+                properties["rank"] = value
+                self.write_documents()
+                with self.assertRaisesRegex(ValueError, "incorrect GeoJSON rank"):
+                    validate_package(self.root)
+
+    def test_missing_population_record_is_rejected(self):
+        self.documents["study-population-features.json"]["features"].pop()
+        self.write_documents()
+        with self.assertRaisesRegex(ValueError, "expected 450 records"):
+            validate_package(self.root)
+
+    def test_population_sample_identity_mismatch_is_rejected(self):
+        row = self.documents["study-population-features.json"]["features"][0]
+        row["studyPopulationId"] = "different-sample"
+        self.write_documents()
+        with self.assertRaisesRegex(ValueError, "sample identity mismatch"):
+            validate_package(self.root)
+
+    def test_nonfinite_population_values_are_rejected(self):
+        row = self.documents["study-population-features.json"]["features"][0]
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.subTest(value=value):
+                row["rawValue"] = value
+                self.write_documents()
+                with self.assertRaisesRegex(ValueError, "finite number"):
+                    validate_package(self.root)
+
+    def test_manifest_sample_multiplicity_mismatch_is_rejected(self):
+        transform = self.documents["model_manifest.json"]["transforms"]["mars:relative_relief_m"]
+        # Keep count and sorting valid, but change one occurrence.
+        transform["sortedRawValues"][-1] = 3.0
+        self.write_documents()
+        with self.assertRaisesRegex(ValueError, "differs from manifest samples"):
             validate_package(self.root)
 
 
