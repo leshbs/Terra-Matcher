@@ -95,7 +95,14 @@ def _build_manifest(study_features: list[dict[str, Any]], locations_by_id: dict[
                 "analysisResolutionM": ANALYSIS_RESOLUTION_M,
                 "localWindowKm": LOCAL_WINDOW_KM,
             }
-    return {"modelRunId": MODEL_RUN_ID, "transforms": transforms}
+    return {
+        "modelRunId": MODEL_RUN_ID,
+        "inputDatasetIds": sorted({dataset_id for location in locations_by_id.values() for dataset_id in location["datasetIds"]}),
+        "analysisResolutionM": ANALYSIS_RESOLUTION_M,
+        "localWindowKm": LOCAL_WINDOW_KM,
+        "transformationVersion": TRANSFORMATION_VERSION,
+        "transforms": transforms,
+    }
 
 
 def _normalise_display_features(features: list[dict[str, Any]], locations_by_id: dict[str, dict[str, Any]], manifest: dict[str, Any]) -> list[dict[str, Any]]:
