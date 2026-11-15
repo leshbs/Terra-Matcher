@@ -192,3 +192,20 @@ Baseline pengujian:
 
 Sampai langkah-langkah tersebut disetujui, tidak ada impor atau aktivasi
 run pipeline di production.
+
+## Catatan handoff 2026-11-14-mvp-v1
+
+Status: catatan draft. Belum disetujui untuk implementasi atau publikasi.
+
+- Model run: `2026-11-14-mvp-v1`
+- Scenario ID: `mars-gale-aeolis-palus-v1` (ditetapkan tim).
+- Hash `model_manifest.json` dari ZIP handoff lama yang dikonfirmasi tim: `49F0A42CCFBFF1307805DB89A89A9F5176FE664EA2F39AC5DE85083556D63A32` (13.359 byte). Hash ini sudah dihitung ulang dan hasilnya sama.
+  - Tabel SHA-256 `DBB3065012ADC33E8DEFCDE09F3C9830163CE584C864B1A9D1ED674768607094` (13.547 byte) berasal dari output lokal yang lebih baru. Bukan handoff resmi. Versi ini menambahkan `inputDatasetIds`, `analysisResolutionM`, `localWindowKm`, dan `transformationVersion`.
+- Delapan artefak lain dikonfirmasi tim identik dengan ZIP lama. Kecocokan ini belum diverifikasi langsung dari ZIP.
+- ZIP revisi belum ada. Jika dibuat, label usulan: `2026-11-14-mvp-v1-r1`, dengan daftar SHA-256 baru untuk seluruh paket.
+- Execution commit: tidak direkam dan tidak boleh diklaim retroaktif.
+- `generated_at`: tidak direkam. Timestamp filesystem bukan bukti waktu eksekusi.
+- Versi model keseluruhan: belum ada field `modelVersion` formal.
+- Persetujuan publikasi: belum diputuskan.
+- Paket tidak dipindahkan ke `public/` sampai ada keputusan tertulis.
+- Belum ada migrasi, seed, importer, atau perubahan Supabase.

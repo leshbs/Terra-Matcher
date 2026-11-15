@@ -87,6 +87,10 @@ class RunRankingsTests(unittest.TestCase):
                     "earth:relative_relief_m",
                 },
             )
+            self.assertEqual(outputs["manifest"]["inputDatasetIds"], ["earth-dem", "mars-dem"])
+            self.assertEqual(outputs["manifest"]["analysisResolutionM"], 500)
+            self.assertEqual(outputs["manifest"]["localWindowKm"], 3)
+            self.assertEqual(outputs["manifest"]["transformationVersion"], "ecdf-midrank-v1")
             output_root = training_root / "processed" / "2026-11-14-mvp-v1"
             self.assertTrue((output_root / "validation-report.json").exists())
             self.assertTrue((output_root / "location-evidence.json").exists())

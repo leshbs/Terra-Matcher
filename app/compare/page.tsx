@@ -48,9 +48,12 @@ export default async function CompareIndexPage() {
           aria-label="Breadcrumb"
           className="flex flex-wrap items-center gap-2 text-sm text-slate-400"
         >
-          <span className="font-medium text-cyan-300">
-            Terra Analog Mission Control
-          </span>
+          <Link
+  href="/"
+  className="font-medium text-cyan-300 hover:text-cyan-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+>
+  Back to main dashboard
+</Link>
           <span aria-hidden="true">/</span>
           <span className="text-slate-200">Ranking dashboard</span>
         </nav>
@@ -105,10 +108,9 @@ export default async function CompareIndexPage() {
             </p>
             <p className="mt-2 font-mono text-xs text-slate-500">
               {formatCoordinate(dataset.scenario.center.latitude, "lat")} ·{" "}
-              {formatCoordinate(dataset.scenario.center.longitude, "lon")} ·
-              MOLA reference ·{" "}
-              {dataset.scenario.features.median_slope_deg.analysisResolutionM}{" "}
-              m source resolution
+              {formatCoordinate(dataset.scenario.center.longitude, "lon")} · MOLA reference ·{" "}
+              {dataset.scenario.features.median_slope_deg.analysisResolutionM} m source resolution
+            
             </p>
           </div>
           <dl className="grid grid-cols-3 gap-2 text-center">

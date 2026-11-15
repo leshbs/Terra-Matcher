@@ -6,10 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "validate:production-evidence": "node --test pipeline/tests/production-evidence.test.mjs",
+    "validate:scientific-claims": "node scripts/scan-scientific-claims.mjs ."
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
+    "maplibre-gl": "^6.18.0",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -19,6 +22,7 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
+    "@types/geojson": "^7946.0.16",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

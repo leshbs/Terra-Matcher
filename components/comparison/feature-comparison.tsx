@@ -79,9 +79,11 @@ export default function FeatureComparison({
             Feature-by-feature comparison
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-            Each feature shows raw value, unit, and normalised percentile.
-            Percentiles are computed separately per body, so a raw Earth metre
-            is never treated as physically equivalent to a raw Mars metre.
+            Each feature shows its raw value and unit alongside a body-specific
+normalised percentile. Percentiles compare relative position within each
+body&apos;s population, so a raw Earth metre is never treated as physically
+equivalent to a raw Mars metre; similar percentiles do not establish
+geological or mission-environment equivalence.
           </p>
         </div>
         <span className="rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-xs font-medium text-slate-300">
