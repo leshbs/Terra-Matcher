@@ -13,12 +13,21 @@ The application currently has two separate experiences:
 
 This design makes the scenario-ranking endpoint the only production contract and eliminates the disconnected user-facing paths.
 
+## Shared Explorer Integration
+
+Comparison/Ranking and Explorer are one public story, not two independent data products. Both select the same finalized production scenario and ready model run through `lib/scenario-production.ts`.
+
+The shared repository owns Supabase queries and validation for `scenarios`, `model_runs`, `candidate_scores`, `ranking_contributions`, `location_evidence`, datasets, and locations. It returns `ProductionScenarioContext`. The comparison assembler maps that context to `ComparisonDataset`; the Explorer assembler maps the same context plus exactly 25 validated grid samples per location to its map contract. Browser code only fetches the matching Next.js route and never imports Supabase.
+
+For the MVP, a single Mars scenario and five Earth candidates are required. Explorer therefore displays six windows and exactly 150 source-backed grid samples. It must never invent map cells from aggregate ranking features.
+
 ## Scope
 
 ### Included
 
-- A typed production endpoint at `GET /api/scenarios/[scenarioId]/rankings`.
+- Typed production endpoints at `GET /api/scenarios/[scenarioId]/rankings` and `GET /api/scenarios/[scenarioId]/explorer`.
 - Server-side assembly of a complete `ComparisonDataset` from Supabase scenario, ranking, contribution, evidence, model, and dataset-provenance records.
+- A shared production context used by both Ranking and Explorer endpoint assemblers.
 - Runtime validation of database records and response payloads.
 - Migration of `/`, `/compare`, and `/compare/[scenarioId]/[candidateId]` to the same dataset loader and contract.
 - Explicit, opt-in local demo mode using `comparison-demo.json`.
@@ -49,24 +58,24 @@ The endpoint must order candidates by ascending `rank` and reject records that a
 ## Data Flow
 
 ```text
-Supabase: scenarios, candidate_scores, ranking_contributions,
-location_evidence, datasets/model metadata
-  -> server-only comparison repository/assembler
-  -> GET /api/scenarios/[scenarioId]/rankings
-  -> loadComparisonBundle({ scenarioId })
-  -> Home ranking summary, /compare, and /compare/[scenarioId]/[candidateId]
+Supabase: scenarios, model_runs, candidate_scores, ranking_contributions,
+location_evidence, datasets, locations, explorer_grid_samples
+  -> server-only loadProductionScenario(scenarioId)
+  -> ProductionScenarioContext
+  -> Comparison assembler -> /rankings -> home, /compare, candidate detail
+  -> Explorer assembler   -> /explorer -> /explore
 ```
 
-The assembler is server-only and is the sole module that translates database naming and joins into `ComparisonDataset`. Pages and client components do not query Supabase or transform database rows.
+Assemblers are server-only and are the sole modules that translate database naming and joins into their UI contracts. Pages and client components do not query Supabase or transform database rows.
 
 ## Source Modes and Failure Behavior
 
 `COMPARISON_DATA_SOURCE` remains the mode selector:
 
-- `api`: required in deployed production. The loader requests the ranking endpoint using `COMPARISON_API_ORIGIN` or the application origin. Request, HTTP, JSON, or schema failures render a clear unavailable/error state with no fixture data substituted.
+- `api`: required in deployed production. The comparison loader requests the ranking endpoint using `COMPARISON_API_ORIGIN` or the application origin; Explorer does the same through `EXPLORER_DATA_SOURCE=api`. Request, HTTP, JSON, or schema failures render a clear unavailable/error state with no fixture data substituted.
 - `fixture`: permitted only for local demo/development. It reads the bundled fixture and visibly labels the result as demo data.
 
-Deployment configuration must set `COMPARISON_DATA_SOURCE=api` and an origin suitable for server-side fetches. The app must not silently select fixture mode because an environment variable is absent in a deployed environment.
+Deployment configuration must set `COMPARISON_DATA_SOURCE=api`, `EXPLORER_DATA_SOURCE=api`, and an origin suitable for server-side fetches. The app must not silently select fixture mode because an environment variable is absent in a deployed environment. `SUPABASE_SERVICE_ROLE_KEY` remains server-only and is never exposed as a `NEXT_PUBLIC_` variable.
 
 ## UI Integration
 
@@ -94,17 +103,19 @@ Deployment configuration must set `COMPARISON_DATA_SOURCE=api` and an origin sui
 
 ## Test Strategy and Acceptance Criteria
 
+- Unit-test the shared repository for fixture scenarios, unready/mixed model runs, incomplete provenance, and invalid ranking rows.
 - Unit-test the database-row-to-contract assembler for a valid full ranking, a partial-profile candidate, rank ordering, and all rejection paths.
+- Unit-test the Explorer assembler for six locations with exactly 25 samples each, shared model-run identity, and mixed-run/incomplete-grid rejection.
 - Route-test successful envelopes plus 404, unavailable, invalid-provenance, and invalid-ranking-data responses.
 - Test the adapter in both modes: fixture is visibly labeled, API accepts the envelope, and API failure does not load fixture.
 - Render-test the home summary, ranking page, and candidate page against the same representative `ComparisonDataset`.
 - Run the existing comparison fixture/filter tests, route tests, lint, TypeScript checking, and `npm run build`.
-- Manually verify one deployed or local API-mode scenario: the same top candidate, score, model run, and disclaimer appear on `/`, `/compare`, and the candidate URL.
+- Manually verify one deployed or local API-mode scenario: the same top candidate, score, model run, and disclaimer appear on `/`, `/compare`, the candidate URL, and `/explore`.
 
 ## Ownership Boundaries
 
-- Anggota 1 owns Supabase access, the ranking endpoint, environment configuration, and deployment verification.
-- Anggota 4 owns the comparison/ranking UI components and consumes only the canonical contract.
+- Anggota 1 owns Supabase access, the shared repository, both production endpoints, environment configuration, and deployment verification.
+- Anggota 4 owns the comparison/ranking UI components and consumes only the canonical contract; Explorer consumes its own contract from the same production context.
 - The integration owner owns contract changes, migration sequencing, and acceptance verification across routes.
 
 ## Decisions Locked by This Design
