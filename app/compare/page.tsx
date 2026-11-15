@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CompareIndexPage() {
-  const bundle = await getComparisonBundle();
+  const bundle = await getComparisonBundle({ scenarioId: "mars-gale-aeolis-palus-v1" });
   const { dataset, source, warnings } = bundle;
   const candidates = getRankedCandidatesFromDataset(
     dataset,
