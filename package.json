@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "validate:production-evidence": "node --test pipeline/tests/production-evidence.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
