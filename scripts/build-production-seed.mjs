@@ -73,6 +73,27 @@ function rawValuesForCandidate(valuesByLocation, candidateLocationId) {
   return values;
 }
 
+function ecdfMidrank(value, sortedValues) {
+  let rank = 0;
+  while (rank < sortedValues.length && sortedValues[rank] <= value) rank += 1;
+  return Math.max(0, Math.min(1, (rank - 0.5) / sortedValues.length));
+}
+
+function profileFeatures(features, manifest, locationId, body) {
+  const records = features.filter((feature) => feature.locationId === locationId);
+  if (records.length !== requiredFeatureKeys.length) throw new Error(`Missing profile features for ${locationId}`);
+  return Object.fromEntries(records.map((feature) => {
+    const transform = manifest.transforms[`${body}:${feature.featureKey}`];
+    if (!transform) throw new Error(`Missing transform for ${locationId}:${feature.featureKey}`);
+    return [feature.featureKey, {
+      rawValue: feature.rawValue,
+      normalizedValue: ecdfMidrank(feature.rawValue, transform.sortedRawValues),
+      unit: feature.unit,
+      sourceDatasetId: feature.sourceDatasetId,
+    }];
+  }));
+}
+
 export async function buildProductionSeed({ trainingRoot, outputPath }) {
   const input = await loadInput(trainingRoot);
   validateProductionEvidence(input);
@@ -89,9 +110,9 @@ export async function buildProductionSeed({ trainingRoot, outputPath }) {
     ], '(id) do update set provider = excluded.provider, product = excluded.product, version = excluded.version, url = excluded.url, access_url = excluded.access_url, native_resolution = excluded.native_resolution, unit = excluded.unit, citation = excluded.citation, limitations = excluded.limitations'));
   }
 
-  lines.push(insert('model_runs', ['id', 'analysis_resolution_m', 'local_window_km', 'transformation_version', 'input_dataset_ids'], [
-    sqlString(input.manifest.modelRunId), input.manifest.analysisResolutionM ?? 500, input.manifest.localWindowKm, sqlString(input.manifest.transformationVersion), sqlJson(input.manifest.inputDatasetIds),
-  ], '(id) do update set analysis_resolution_m = excluded.analysis_resolution_m, local_window_km = excluded.local_window_km, transformation_version = excluded.transformation_version, input_dataset_ids = excluded.input_dataset_ids'));
+  lines.push(insert('model_runs', ['id', 'analysis_resolution_m', 'local_window_km', 'transformation_version', 'input_dataset_ids', 'status'], [
+    sqlString(input.manifest.modelRunId), input.manifest.analysisResolutionM ?? 500, input.manifest.localWindowKm, sqlString(input.manifest.transformationVersion), sqlJson(input.manifest.inputDatasetIds), sqlString('ready'),
+  ], '(id) do update set analysis_resolution_m = excluded.analysis_resolution_m, local_window_km = excluded.local_window_km, transformation_version = excluded.transformation_version, input_dataset_ids = excluded.input_dataset_ids, status = excluded.status'));
 
   for (const location of input.locations) {
     if (location.kind === 'reference-scenario') {
@@ -103,6 +124,21 @@ export async function buildProductionSeed({ trainingRoot, outputPath }) {
         sqlString(location.id), sqlString(location.name), 'null', location.center.latitude, location.center.longitude, sqlString('See dataset provenance and candidate evidence.'),
       ], '(id) do update set name = excluded.name, latitude = excluded.latitude, longitude = excluded.longitude, source = excluded.source'));
     }
+  }
+
+  const evidenceByLocation = new Map(input.evidence.map((item) => [item.locationId, item]));
+  for (const location of input.locations) {
+    const isScenario = location.kind === 'reference-scenario';
+    const evidence = evidenceByLocation.get(location.id);
+    const body = isScenario ? 'mars' : 'earth';
+    lines.push(insert('location_profiles', ['model_run_id', 'location_id', 'location_kind', 'latitude', 'longitude', 'radius_km', 'summary', 'operational_hypothesis', 'limitations', 'source_dataset_ids', 'analysis_resolution_m', 'local_window_km', 'quality_flag', 'features'], [
+      sqlString(input.manifest.modelRunId), sqlString(location.id), sqlString(isScenario ? 'scenario' : 'candidate'), location.center.latitude, location.center.longitude, isScenario ? 20 : 3,
+      sqlString(isScenario ? 'Data-derived terrain reference window; not a mission-site recommendation.' : location.name),
+      sqlString(evidence?.operationalHypothesis ?? 'Reference terrain window for comparison only.'),
+      sqlJson(evidence?.limitations ?? ['Data-derived similarity, not mission-site approval.']),
+      sqlJson(evidence?.sourceDatasetIds ?? input.manifest.inputDatasetIds), input.manifest.analysisResolutionM, input.manifest.localWindowKm,
+      sqlString('source-backed-derived'), sqlJson(profileFeatures(input.features, input.manifest, location.id, body)),
+    ], '(model_run_id, location_id) do update set features = excluded.features, quality_flag = excluded.quality_flag, summary = excluded.summary, operational_hypothesis = excluded.operational_hypothesis, limitations = excluded.limitations'));
   }
 
   for (const ranking of input.rankings) {
