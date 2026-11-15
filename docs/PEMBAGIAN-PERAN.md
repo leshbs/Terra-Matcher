@@ -197,7 +197,7 @@ Fokus: memastikan proyek memenangkan Validity, Relevance, dan Impact, bukan hany
 - [x] Memastikan setiap skor memiliki sumber dan caveat.
 - [x] Memeriksa klaim berlebihan seperti “best landing site”, “proven analog”, atau “AI discovery”.
 - [x] Menjalankan checklist rubrik NASA Space Apps.
-- [ ] Menguji alur pengguna dari landing page sampai comparison.
+- [x] Menguji alur pengguna dari landing page sampai comparison.
 - [x] Menulis README/submission description.
 - [ ] Memimpin rehearsal demo dan mencatat bug prioritas.
 
