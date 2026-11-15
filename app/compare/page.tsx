@@ -41,9 +41,12 @@ export default function CompareIndexPage() {
           aria-label="Breadcrumb"
           className="flex flex-wrap items-center gap-2 text-sm text-slate-400"
         >
-          <span className="font-medium text-cyan-300">
-            Terra Analog Mission Control
-          </span>
+          <Link
+  href="/"
+  className="font-medium text-cyan-300 hover:text-cyan-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+>
+  Back to main dashboard
+</Link>
           <span aria-hidden="true">/</span>
           <span className="text-slate-200">Ranking dashboard</span>
         </nav>
@@ -105,7 +108,7 @@ export default function CompareIndexPage() {
               )}{" "}
               · MOLA reference ·{" "}
               {comparisonFixture.scenario.features.median_slope_deg.analysisResolutionM}{" "}
-              m source resolution
+              m analysis grid resolution
             </p>
           </div>
           <dl className="grid grid-cols-3 gap-2 text-center">
