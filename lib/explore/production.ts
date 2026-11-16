@@ -1,131 +1,89 @@
-import type { DatasetInfo } from "./types";
-import type { ExplorerWindowInput } from "./assembler";
+import "server-only";
 
-type WindowRow = {
-  id: string;
-  scenario_id: string;
-  candidate_id: string | null;
-  model_run_id: string;
-  body: "mars" | "earth";
-  name: string;
-  kind: string;
-  center_longitude: number;
-  center_latitude: number;
-  dataset_id: string;
+import type { ProductionScenarioContext } from "@/lib/scenario-production";
+import type { ExplorerAssemblyContext, ExplorerSampleInput } from "./contracts";
+
+type Profile = {
+  location_id: string;
+  location_kind: "scenario" | "candidate";
+  latitude: number;
+  longitude: number;
+  summary: string;
   operational_hypothesis: string;
   limitations: string[];
-  median_slope_deg: number;
-  terrain_roughness_m: number;
-  relative_relief_m: number;
+  source_dataset_ids: string[];
+  features: Record<string, { rawValue: number; sourceDatasetId: string }>;
 };
 
-type ScoreRow = {
-  candidate_id: string;
-  model_version: string;
-  rank: number;
-  similarity_score: number;
-  data_coverage: number;
+const featureValue = (profile: Profile, key: string) => {
+  const value = profile.features[key]?.rawValue;
+  if (!Number.isFinite(value)) throw new Error(`Explorer profile ${profile.location_id} is missing ${key}.`);
+  return value;
 };
 
-type ContributionRow = {
-  candidate_id: string;
-  feature_key: string;
-  weighted_contribution: number;
-  candidate_raw_value: number;
-  reference_raw_value: number;
-};
-
-type DatasetRow = {
-  id: string;
-  provider: string;
-  product: string;
-  version: string;
-  native_resolution: unknown;
-  unit: string;
-  citation: string;
-  limitations: string[];
-};
-
-const featureKeyToLayer = {
-  median_slope_deg: "slope",
-  terrain_roughness_m: "rough",
-  relative_relief_m: "relief",
-} as const;
-
-export function buildExplorerContext(input: {
-  scenario: { id: string };
-  modelRun: { id: string };
-  windows: WindowRow[];
-  scores: ScoreRow[];
-  contributions: ContributionRow[];
-  datasets: DatasetRow[];
-}) {
-  const scoresByCandidate = new Map(input.scores.map((score) => [score.candidate_id, score]));
-  const contributionsByCandidate = new Map<string, ContributionRow[]>();
-  for (const contribution of input.contributions) {
-    const rows = contributionsByCandidate.get(contribution.candidate_id) ?? [];
-    rows.push(contribution);
-    contributionsByCandidate.set(contribution.candidate_id, rows);
+export function buildExplorerAssemblyContext(context: ProductionScenarioContext): ExplorerAssemblyContext {
+  const profiles = context.locationProfiles as Profile[];
+  const scores = context.candidateScores as Array<{ candidate_id: string; rank: number; similarity_score: number; data_coverage: number }>;
+  const contributions = context.contributions as Array<{ candidate_id: string; feature_key: string; candidate_raw_value: number; reference_raw_value: number; weighted_contribution: number }>;
+  const scoreByCandidate = new Map(scores.map((score) => [score.candidate_id, score]));
+  const contributionByCandidate = new Map<string, typeof contributions>();
+  for (const contribution of contributions) {
+    contributionByCandidate.set(contribution.candidate_id, [...(contributionByCandidate.get(contribution.candidate_id) ?? []), contribution]);
   }
-  const modelVersion = input.scores[0]?.model_version;
-  if (!modelVersion) throw new Error("Explorer production data has no candidate score model version.");
 
-  const windows: ExplorerWindowInput[] = input.windows.map((window) => {
-    if (window.scenario_id !== input.scenario.id || window.model_run_id !== input.modelRun.id) {
-      throw new Error("Explorer window is not part of the selected production scenario and model run.");
-    }
-    const base = {
-      id: window.id,
-      scenarioId: window.scenario_id,
-      candidateId: window.candidate_id,
-      name: window.name,
-      kind: window.kind,
-      body: window.body,
-      center: [window.center_longitude, window.center_latitude] as [number, number],
-      datasetId: window.dataset_id,
-      hypothesis: window.operational_hypothesis,
-      limitations: window.limitations,
-      features: { slope: window.median_slope_deg, rough: window.terrain_roughness_m, relief: window.relative_relief_m },
-    };
-    if (!window.candidate_id) return base;
-    const score = scoresByCandidate.get(window.candidate_id);
-    if (!score) throw new Error(`Explorer candidate window ${window.id} has no matching score.`);
-    const contributions = contributionsByCandidate.get(window.candidate_id) ?? [];
-    if (contributions.length !== 3) throw new Error(`Explorer candidate window ${window.id} has incomplete contributions.`);
-    const rankedContributions = contributions.map((contribution) => ({
-      featureKey: contribution.feature_key,
-      candidateRaw: contribution.candidate_raw_value,
-      referenceRaw: contribution.reference_raw_value,
-      weightedContribution: contribution.weighted_contribution,
-    }));
-    const ordered = [...contributions].sort((left, right) => left.weighted_contribution - right.weighted_contribution);
-    return {
-      ...base,
-      rank: score.rank,
-      score: score.similarity_score,
-      coverage: score.data_coverage,
-      contributions: rankedContributions,
-      strongest: ordered[0].feature_key,
-      mismatch: ordered.at(-1)?.feature_key,
-    };
-  });
+  return {
+    scenario: { id: context.scenario.id },
+    modelRun: { id: context.modelRun.id, status: context.modelRun.status, modelVersion: context.modelRun.transformation_version },
+    datasets: (context.datasets as Array<Record<string, unknown>>).map((dataset) => ({
+      id: String(dataset.id), short: String(dataset.product), provider: String(dataset.provider),
+      resolution: JSON.stringify(dataset.native_resolution), unit: String(dataset.unit), license: "See source citation.",
+      citation: String(dataset.citation), limitations: Array.isArray(dataset.limitations) ? dataset.limitations.map(String) : [],
+    })),
+    windows: profiles.slice().sort((left, right) => {
+      if (left.location_kind === "scenario") return -1;
+      if (right.location_kind === "scenario") return 1;
+      return (scoreByCandidate.get(left.location_id)?.rank ?? Number.MAX_SAFE_INTEGER)
+        - (scoreByCandidate.get(right.location_id)?.rank ?? Number.MAX_SAFE_INTEGER);
+    }).map((profile) => {
+      const score = scoreByCandidate.get(profile.location_id);
+      const matched = contributionByCandidate.get(profile.location_id) ?? [];
+      const strongest = matched.slice().sort((left, right) => left.weighted_contribution - right.weighted_contribution)[0]?.feature_key;
+      const mismatch = matched.slice().sort((left, right) => right.weighted_contribution - left.weighted_contribution)[0]?.feature_key;
+      const datasetId = profile.features.median_slope_deg?.sourceDatasetId;
+      if (!datasetId) throw new Error(`Explorer profile ${profile.location_id} has no source dataset.`);
+      const shared = {
+        id: profile.location_id, scenarioId: context.scenario.id, name: profile.location_kind === "scenario" ? context.scenario.name : profile.summary,
+        kind: profile.location_kind, body: profile.location_kind === "scenario" ? "mars" as const : "earth" as const,
+        center: [profile.longitude, profile.latitude] as [number, number], datasetId, hypothesis: profile.operational_hypothesis,
+        limitations: profile.limitations, features: {
+          slope: featureValue(profile, "median_slope_deg"), rough: featureValue(profile, "terrain_roughness_m"), relief: featureValue(profile, "relative_relief_m"),
+        },
+      };
+      if (profile.location_kind === "candidate") {
+        if (!score) throw new Error(`Explorer candidate ${profile.location_id} has no ranking score.`);
+        if (matched.length !== 3 || !strongest || !mismatch) {
+          throw new Error(`Explorer candidate ${profile.location_id} has incomplete ranking evidence.`);
+        }
+        return {
+          ...shared, rank: score.rank, score: score.similarity_score, coverage: score.data_coverage,
+          contributions: matched.map((item) => ({ featureKey: item.feature_key, candidateRaw: item.candidate_raw_value, referenceRaw: item.reference_raw_value, weightedContribution: item.weighted_contribution })),
+          strongest, mismatch,
+        };
+      }
+      return shared;
+    }),
+  };
+}
 
-  const datasets: DatasetInfo[] = input.datasets.map((dataset) => ({
-    id: dataset.id,
-    short: `${dataset.product} ${dataset.version}`,
-    provider: dataset.provider,
-    resolution: typeof dataset.native_resolution === "object" ? JSON.stringify(dataset.native_resolution) : String(dataset.native_resolution),
-    unit: dataset.unit,
-    license: "See dataset provenance.",
-    citation: dataset.citation,
-    limitations: dataset.limitations,
+export async function loadExplorerSamples(modelRunId: string, locationIds: string[]): Promise<ExplorerSampleInput[]> {
+  const { supabaseServer } = await import("@/lib/supabase/server");
+  const result = await supabaseServer.from("explorer_grid_samples")
+    .select("id, model_run_id, location_id, dataset_id, offset_east_km, offset_north_km, slope, roughness, relative_relief, quality_flag")
+    .eq("model_run_id", modelRunId).in("location_id", locationIds);
+  if (result.error) throw new Error("Explorer grid samples are unavailable.");
+  return (result.data ?? []).map((sample) => ({
+    id: sample.id, modelRunId: sample.model_run_id, windowId: sample.location_id, datasetId: sample.dataset_id,
+    eastKm: sample.offset_east_km, northKm: sample.offset_north_km, slope: sample.slope,
+    roughness: sample.roughness, relief: sample.relative_relief,
   }));
-
-  for (const window of windows) {
-    if (!datasets.some((dataset) => dataset.id === window.datasetId)) {
-      throw new Error(`Explorer window ${window.id} references an unknown dataset.`);
-    }
-  }
-
-  return { scenario: input.scenario, modelRun: { ...input.modelRun, modelVersion }, datasets, windows };
 }

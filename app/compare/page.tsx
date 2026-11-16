@@ -23,8 +23,10 @@ export const metadata: Metadata = {
     "Ranked Earth candidate hypotheses for the Gale Crater reference window. Data-derived terrain similarity, not mission-site approval.",
 };
 
+export const instant = false;
+
 export default async function CompareIndexPage() {
-  const bundle = await getComparisonBundle();
+  const bundle = await getComparisonBundle({ scenarioId: "mars-gale-aeolis-palus-v1" });
   const { dataset, source, warnings } = bundle;
   const candidates = getRankedCandidatesFromDataset(
     dataset,

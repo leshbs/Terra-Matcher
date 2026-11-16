@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:e2e": "playwright test",
     "validate:production-evidence": "node --test pipeline/tests/production-evidence.test.mjs",
     "validate:scientific-claims": "node scripts/scan-scientific-claims.mjs ."
   },
@@ -21,6 +22,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^20",

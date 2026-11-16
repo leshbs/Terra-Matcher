@@ -8,6 +8,7 @@
 
 -- 1. datasets: anon hanya boleh membaca dua dataset sumber yang disetujui.
 drop policy if exists "public read datasets" on public.datasets;
+drop policy if exists "public read approved datasets" on public.datasets;
 create policy "public read approved datasets"
   on public.datasets
   for select
@@ -16,6 +17,7 @@ create policy "public read approved datasets"
 
 -- 2. model_runs: anon hanya boleh membaca run methodology yang disetujui.
 drop policy if exists "public read model runs" on public.model_runs;
+drop policy if exists "public read approved model runs" on public.model_runs;
 create policy "public read approved model runs"
   on public.model_runs
   for select

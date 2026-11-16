@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import fixtureJson from "@/data/fixtures/comparison-demo.json";
+import { resolveDataSourceMode } from "@/lib/source-mode";
 import {
   comparisonDatasetSchema,
   comparisonFixtureSchema,
@@ -93,8 +94,11 @@ function loadFixtureDataset(): ComparisonDataset {
 }
 
 export function resolveComparisonSourceMode(): ComparisonSourceMode {
-  const raw = process.env.COMPARISON_DATA_SOURCE?.trim().toLowerCase();
-  return raw === "api" ? "api" : "fixture";
+  return resolveDataSourceMode({
+    value: process.env.COMPARISON_DATA_SOURCE,
+    environment: process.env.NODE_ENV,
+    variableName: "COMPARISON_DATA_SOURCE",
+  });
 }
 
 /**
@@ -191,8 +195,6 @@ async function loadApiDataset(scenarioId?: string): Promise<ComparisonDataset> {
 
 async function loadComparisonBundleUncached(options?: {
   scenarioId?: string;
-  /** When true, never fall back to the fixture (useful for tests). */
-  strict?: boolean;
 }): Promise<ComparisonBundle> {
   const mode = resolveComparisonSourceMode();
   const warnings: string[] = [];
@@ -222,56 +224,26 @@ async function loadComparisonBundleUncached(options?: {
           "Comparison API failed for an unknown reason.",
         );
 
-    if (options?.strict) {
-      throw new Error(failure.message);
-    }
-
-    console.warn(
-      "[comparison-adapter] API source failed; falling back to fixture.",
-      failure,
-    );
-
-    warnings.push(
-      `${failure.message} Showing the local fixture until the backend payload is available.`,
-    );
-
-    return {
-      dataset: loadFixtureDataset(),
-      source: {
-        ...SOURCE_INFO.fixture,
-        label: "Fixture fallback",
-        description: `${SOURCE_INFO.fixture.description} Active because the API source failed.`,
-      },
-      warnings,
-      failure,
-    };
+    throw new Error(failure.message);
   }
 }
 
 const loadComparisonBundleCached = cache(
-  async (scenarioId: string | undefined, strict: boolean) =>
-    loadComparisonBundleUncached({ scenarioId, strict }),
+  async (scenarioId: string | undefined) =>
+    loadComparisonBundleUncached({ scenarioId }),
 );
 
 /**
- * Loads the comparison UI dataset from fixture or API.
- * API mode falls back to the local fixture so the demo path stays intact
- * when Anggota 1 endpoints are not ready yet.
- *
- * Cached per request so generateMetadata + page share one load.
+ * Loads the comparison UI dataset from an explicit local fixture or the API.
+ * API errors remain visible to the route error boundary.
  */
 export async function loadComparisonBundle(options?: {
   scenarioId?: string;
-  /** When true, never fall back to the fixture (useful for tests). */
-  strict?: boolean;
 }): Promise<ComparisonBundle> {
-  return loadComparisonBundleCached(
-    options?.scenarioId,
-    options?.strict ?? false,
-  );
+  return loadComparisonBundleCached(options?.scenarioId);
 }
 
-/** Always-available local fixture for generateStaticParams and unit tests. */
+/** Local fixture access is restricted by resolveComparisonSourceMode(). */
 export function getLocalComparisonFixture(): ComparisonDataset {
   return loadFixtureDataset();
 }

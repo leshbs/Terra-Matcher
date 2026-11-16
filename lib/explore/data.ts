@@ -1,68 +1,128 @@
-import type { FeatureCollection, Point } from "geojson";
-import type { ExploreData, WindowData } from "./types";
+import type { ExploreData } from "./types";
+import { resolveDataSourceMode } from "@/lib/source-mode";
 
-// Map assets live only in public/layers/ and are declared in its manifest.
-// Window text (hypothesis, limitations, contributions) still comes from the demo JSON;
-// swap META for the real API route once Anggota 1 exposes it.
-const MANIFEST = "/layers/manifest.json";
-const META = "/data/demo/explore-fixture.json";
+const FIXTURE_URL = "/data/demo/explore-fixture.json";
+const FIXTURE_MANIFEST_URL = "/layers/manifest.json";
+const FIXTURE_CELLS_URL = "/layers/terrain-cells.geojson";
+const FIXTURE_CANDIDATES_URL = "/layers/candidates.geojson";
+const DEFAULT_SCENARIO_ID = "mars-gale-aeolis-palus-v1";
 
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
-  return res.json() as Promise<T>;
+export type ExploreSourceMode = "api" | "fixture";
+
+export function resolveExploreSourceMode(): ExploreSourceMode {
+  return resolveDataSourceMode({
+    value: process.env.EXPLORER_DATA_SOURCE,
+    environment: process.env.NODE_ENV,
+    variableName: "EXPLORER_DATA_SOURCE",
+  });
 }
 
-function assertCells(fc: FeatureCollection) {
-  if (fc.type !== "FeatureCollection" || !fc.features.length) throw new Error("Cell layer is empty or not a FeatureCollection");
-  for (const f of fc.features) {
-    const p = f.properties as Record<string, unknown> | null;
-    if (!p || typeof p.wid !== "string" || ["slope", "rough", "relief"].some((k) => typeof p[k] !== "number")) {
-      throw new Error(`Invalid cell feature: ${JSON.stringify(p)?.slice(0, 80)}`);
+export function resolveExploreApiUrl(scenarioId: string): string {
+  return `/api/scenarios/${encodeURIComponent(scenarioId)}/explorer`;
+}
+
+function hasCanonicalGrid(data: Partial<ExploreData>): data is ExploreData {
+  const cells = data.cells;
+  const ranges = data.gridRanges;
+  return (
+    cells?.type === "FeatureCollection" &&
+    Array.isArray(cells.features) &&
+    ranges !== undefined &&
+    (["slope", "rough", "relief"] as const).every((key) => {
+      const range = ranges[key];
+      return Array.isArray(range) && range.length === 2 && range.every(Number.isFinite);
+    })
+  );
+}
+
+function gridRangesFromCells(cells: ExploreData["cells"]): ExploreData["gridRanges"] {
+  const range = (key: "slope" | "rough" | "relief"): [number, number] => {
+    const values = cells.features.map((cell) => Number(cell.properties?.[key]));
+    return [Math.min(...values), Math.max(...values)];
+  };
+  return { slope: range("slope"), rough: range("rough"), relief: range("relief") };
+}
+
+async function loadFixturePayload(payload: { data: unknown; meta: unknown }): Promise<ExploreData> {
+  const [manifestResponse, cellsResponse, candidatesResponse] = await Promise.all([
+    fetch(FIXTURE_MANIFEST_URL, { cache: "no-store" }),
+    fetch(FIXTURE_CELLS_URL, { cache: "no-store" }),
+    fetch(FIXTURE_CANDIDATES_URL, { cache: "no-store" }),
+  ]);
+  if (![manifestResponse, cellsResponse, candidatesResponse].every((response) => response.ok)) {
+    throw new Error("Explorer fixture layers could not be loaded.");
+  }
+  const [manifest, cells, candidates] = await Promise.all([
+    manifestResponse.json() as Promise<{ modelRunId: string; attribution: string[] }>,
+    cellsResponse.json() as Promise<ExploreData["cells"]>,
+    candidatesResponse.json() as Promise<{ features: Array<{ geometry?: { type?: string; coordinates?: unknown }; properties?: Record<string, unknown> }> }>,
+  ]);
+  const source = payload.data as { datasets: ExploreData["datasets"]; windows: Array<Omit<ExploreData["windows"][number], "center" | "points">> };
+  const windows = source.windows.map((window) => {
+    const marker = candidates.features.find((feature) => feature.properties?.id === window.id);
+    if (marker?.geometry?.type !== "Point" || !Array.isArray(marker.geometry.coordinates)) {
+      throw new Error(`Explorer fixture marker is missing for ${window.id}.`);
+    }
+    const points = cells.features.filter((cell) => cell.properties?.wid === window.id).map((cell) => ({
+      e: Number(cell.properties?.e), n: Number(cell.properties?.n), slope: Number(cell.properties?.slope),
+      rough: Number(cell.properties?.rough), relief: Number(cell.properties?.relief),
+    }));
+    return { ...window, center: marker.geometry.coordinates as [number, number], points };
+  });
+  return {
+    datasets: source.datasets, windows, cells, gridRanges: gridRangesFromCells(cells),
+    attribution: manifest.attribution, meta: { modelRunId: manifest.modelRunId },
+  };
+}
+
+async function parseExplorePayload(payload: unknown, mode: ExploreSourceMode): Promise<ExploreData> {
+  if (payload !== null && typeof payload === "object" && "data" in payload && "meta" in payload) {
+    const { data, meta } = payload as { data: unknown; meta: unknown };
+    if (
+      data !== null && typeof data === "object" && "datasets" in data && "windows" in data &&
+      Array.isArray((data as { windows: unknown }).windows) &&
+      meta !== null && typeof meta === "object" &&
+      typeof (meta as { modelRunId?: unknown }).modelRunId === "string"
+    ) {
+      const explorerData = data as Partial<ExploreData>;
+      if (hasCanonicalGrid(explorerData)) {
+        return { ...(data as Omit<ExploreData, "meta">), meta: meta as ExploreData["meta"] };
+      }
+
+      if (mode === "fixture") {
+        return loadFixturePayload({ data, meta });
+      }
     }
   }
+
+  throw new Error("Explorer API response does not match the UI data contract.");
 }
 
-async function loadFixtureExplore(): Promise<ExploreData> {
-  const manifest = await getJson<{ modelRunId: string; layers: { id: string; path: string }[]; attribution: string[] }>(MANIFEST);
-  const path = (id: string) => {
-    const l = manifest.layers.find((x) => x.id === id);
-    if (!l) throw new Error(`Layer "${id}" is missing from the manifest`);
-    return l.path;
-  };
-  const [meta, cells, cands] = await Promise.all([
-    getJson<{ data: { datasets: ExploreData["datasets"]; windows: Omit<WindowData, "center" | "pointCount">[] }; meta: { modelRunId: string } }>(META),
-    getJson<FeatureCollection>(path("terrain-cells")),
-    getJson<FeatureCollection>(path("candidate-markers")),
-  ]);
-  assertCells(cells);
-
-  const runIds = new Set([manifest.modelRunId, meta.meta.modelRunId, ...cands.features.map((f) => f.properties?.modelRunId)]);
-  if (runIds.size !== 1) throw new Error(`Inconsistent model runs: ${[...runIds].join(", ")}`);
-
-  const windows: WindowData[] = meta.data.windows.map((w) => {
-    const f = cands.features.find((x) => x.properties?.id === w.id);
-    if (!f) throw new Error(`Window ${w.id} is missing from candidates.geojson`);
-    const p = f.properties!;
-    return {
-      ...w,
-      center: (f.geometry as Point).coordinates as [number, number],
-      rank: p.rank, score: p.similarityScore, coverage: p.dataCoverage,
-      strongest: p.strongestMatchFeatureKey, mismatch: p.largestMismatchFeatureKey,
-      pointCount: cells.features.filter((c) => c.properties?.wid === w.id).length,
-    };
-  });
-  return { datasets: meta.data.datasets, windows, cells, attribution: manifest.attribution, meta: { modelRunId: manifest.modelRunId } };
-}
-
-const PRODUCTION_SCENARIO_ID = "mars-gale-aeolis-palus-v1";
-
-export async function loadExplore(): Promise<ExploreData> {
-  if (process.env.NEXT_PUBLIC_EXPLORER_DATA_SOURCE === "fixture") {
-    return loadFixtureExplore();
+async function fetchExplore(url: string, label: "API" | "fixture", mode: ExploreSourceMode): Promise<ExploreData> {
+  let response: Response;
+  try {
+    response = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
+  } catch (error) {
+    const detail = error instanceof Error ? ` ${error.message}` : "";
+    throw new Error(`Explorer ${label} could not be reached.${detail}`);
   }
-  const response = await getJson<{ data: ExploreData; meta: ExploreData["meta"] }>(
-    `/api/scenarios/${PRODUCTION_SCENARIO_ID}/explorer`,
-  );
-  return { ...response.data, meta: response.meta };
+
+  if (!response.ok) throw new Error(`Explorer ${label} returned HTTP ${response.status}.`);
+
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error(`Explorer ${label} response was not valid JSON.`);
+  }
+
+  return parseExplorePayload(payload, mode);
+}
+
+/** API failures never substitute demo data, so production failures stay visible. */
+export async function loadExplore(options?: { scenarioId?: string }): Promise<ExploreData> {
+  const mode = resolveExploreSourceMode();
+  const scenarioId = options?.scenarioId?.trim() || DEFAULT_SCENARIO_ID;
+  if (mode === "fixture") return fetchExplore(FIXTURE_URL, "fixture", mode);
+  return fetchExplore(resolveExploreApiUrl(scenarioId), "API", mode);
 }

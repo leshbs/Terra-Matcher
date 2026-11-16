@@ -48,7 +48,7 @@ export default function Inspector({ selection, windows, datasets, runId, layer, 
       ) : (
         <>
           <h3>{w.name}</h3>
-          <p className={s.sub}>20 km radius · {w.pointCount} sample points</p>
+          <p className={s.sub}>20 km radius · {w.points.length} sample points</p>
           <p>{w.rank ? <><b>Rank #{w.rank} of 5</b> · similarity score {fmt(w.score!)} · data coverage {Math.round((w.coverage ?? 0) * 100)}%</> : <b>Mars reference scenario</b>}</p>
           <p>{w.hypothesis}</p>
           <div className={s.grid}>{keys.map((k) => tile(k, w.features[k]))}</div>

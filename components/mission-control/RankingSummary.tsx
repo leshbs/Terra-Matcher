@@ -1,0 +1,7 @@
+import Link from "next/link";
+import type { ComparisonDataset } from "@/components/comparison/contracts";
+
+export default function RankingSummary({ dataset }: { dataset: ComparisonDataset }) {
+  const top = [...dataset.candidates].sort((a, b) => a.rank - b.rank)[0];
+  return <main className="min-h-screen bg-slate-950 p-8 text-slate-100"><div className="mx-auto max-w-4xl space-y-6"><p className="text-sm font-semibold uppercase tracking-widest text-cyan-300">Terra Analog Mission Control</p><h1 className="text-4xl font-semibold">{dataset.scenario.name}</h1><p className="text-slate-300">{dataset.disclaimer}</p><section className="rounded-2xl border border-slate-700 bg-slate-900 p-6"><p className="text-sm text-slate-400">Top Earth candidate</p><h2 className="mt-1 text-2xl font-semibold">#{top.rank} {top.name}</h2><p className="mt-2 font-mono text-cyan-300">{top.similarityScore.toFixed(1)} / 100</p><p className="mt-3 text-sm text-slate-400">{dataset.model.modelRunId} · {dataset.model.modelVersion}</p></section><nav className="flex flex-wrap gap-3"><Link href="/compare" className="rounded-lg bg-cyan-300 px-4 py-2 font-semibold text-slate-950">Open ranking</Link><Link href={`/compare/${dataset.scenario.id}/${top.id}`} className="rounded-lg border border-cyan-300 px-4 py-2 text-cyan-200">Open top comparison</Link><Link href="/explore" className="rounded-lg border border-slate-600 px-4 py-2">Explore terrain</Link></nav></div></main>;
+}

@@ -12,7 +12,7 @@ Earth analogs can help teams frame testable questions about rover traversal, ins
 
 ## What is implemented
 
-- A Mars-first candidate-ranking dashboard with fixture and production modes.
+- A Mars-first candidate-ranking dashboard that requires API data in deployed environments; synthetic fixtures are limited to explicit development/test mode.
 - Evidence-gated production results: incomplete provenance, contributions, or limitations cause the API to withhold the ranking.
 - A methodology and provenance page at `/methodology`.
 - A source-backed offline feature and ranking pipeline with reproducibility checks.
@@ -42,6 +42,9 @@ Install dependencies and configure public Supabase values:
 npm ci
 $env:NEXT_PUBLIC_SUPABASE_URL = 'https://your-project.supabase.co'
 $env:NEXT_PUBLIC_SUPABASE_ANON_KEY = 'your-anon-key'
+$env:COMPARISON_DATA_SOURCE = 'api'
+$env:EXPLORER_DATA_SOURCE = 'api'
+$env:COMPARISON_API_ORIGIN = 'http://localhost:3000'
 ```
 
 Apply the Supabase schema migrations in their existing numeric order, then seed fixtures and the production package:
@@ -55,6 +58,14 @@ Run the app:
 ```powershell
 npm run dev
 ```
+
+For an intentionally synthetic local UI demo, set both data-source variables to
+`fixture` only while `NODE_ENV` is `development` or `test`. An unset, unknown,
+or fixture mode is rejected outside those environments; an API failure is shown
+to the user and is never replaced with fixture data.
+
+For Supabase migration order, production environment values, and the public
+smoke-test checklist, read [the production deployment guide](docs/PRODUCTION_SUPABASE_DEPLOYMENT_GUIDE.md).
 
 ## Verification
 

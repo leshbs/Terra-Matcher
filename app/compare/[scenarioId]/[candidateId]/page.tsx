@@ -2,15 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ComparisonWorkspace from "@/components/comparison/comparison-workspace";
 import {
-  comparisonFixture,
   getComparisonBundle,
   getComparisonViewFromDataset,
 } from "@/components/comparison/data";
 
-// Every valid scenario/candidate pair is prerendered via generateStaticParams,
-// so params resolve without a network round-trip and no loading fallback is
-// needed. Opting out of instant-shell validation keeps navigation to those
-// prerendered pages immediate instead of streaming a Suspense placeholder.
 export const instant = false;
 
 type ComparisonPageProps = {
@@ -19,15 +14,6 @@ type ComparisonPageProps = {
     candidateId: string;
   }>;
 };
-
-export function generateStaticParams() {
-  // Static params come from the local fixture so builds never depend on the
-  // live API. Runtime pages still load through the adapter switcher.
-  return comparisonFixture.candidates.map((candidate) => ({
-    scenarioId: comparisonFixture.scenario.id,
-    candidateId: candidate.id,
-  }));
-}
 
 export async function generateMetadata({
   params,

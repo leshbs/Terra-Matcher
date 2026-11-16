@@ -1,7 +1,6 @@
 import "server-only";
 
 import {
-  getLocalComparisonFixture,
   loadComparisonBundle,
   type ComparisonBundle,
 } from "./adapter";
@@ -11,12 +10,6 @@ import type {
   ComparisonScenario,
   DatasetRecord,
 } from "./contracts";
-
-/**
- * Always the bundled Day 1 fixture. Prefer `loadComparisonBundle()` in pages
- * so the UI can switch to API mode without view-model changes.
- */
-export const comparisonFixture = getLocalComparisonFixture();
 
 export async function getComparisonBundle(options?: {
   scenarioId?: string;
@@ -87,49 +80,4 @@ export function getComparisonViewFromDataset(
     candidate,
     candidates,
   };
-}
-
-/** Fixture-backed helpers kept for Day 1 call sites and static params. */
-export function getRankedCandidates(
-  scenarioId: string,
-): ComparisonCandidate[] | null {
-  return getRankedCandidatesFromDataset(comparisonFixture, scenarioId);
-}
-
-export function getComparisonCandidate(
-  scenarioId: string,
-  candidateId: string,
-): ComparisonCandidate | null {
-  return getComparisonCandidateFromDataset(
-    comparisonFixture,
-    scenarioId,
-    candidateId,
-  );
-}
-
-export function getComparisonScenario(
-  scenarioId: string,
-): ComparisonScenario | null {
-  return getComparisonScenarioFromDataset(comparisonFixture, scenarioId);
-}
-
-export function getDatasetsById(): Record<string, DatasetRecord> {
-  return getDatasetsByIdFromDataset(comparisonFixture);
-}
-
-export function getComparisonView(
-  scenarioId: string,
-  candidateId: string,
-):
-  | {
-      scenario: ComparisonScenario;
-      candidate: ComparisonCandidate;
-      candidates: ComparisonCandidate[];
-    }
-  | null {
-  return getComparisonViewFromDataset(
-    comparisonFixture,
-    scenarioId,
-    candidateId,
-  );
 }

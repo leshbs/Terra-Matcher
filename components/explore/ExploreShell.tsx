@@ -30,7 +30,19 @@ export default function ExploreShell() {
   useEffect(() => { winRef.current = winId; }, [winId]);
 
   useEffect(() => {
-    loadExplore().then(setData).catch((e: Error) => setError(e.message));
+    let cancelled = false;
+    loadExplore()
+      .then((nextData) => {
+        if (!cancelled) setData(nextData);
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled) {
+          setError(reason instanceof Error ? reason.message : "Explorer data could not be loaded.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [attempt]);
 
   const retry = () => {
@@ -81,7 +93,7 @@ export default function ExploreShell() {
           ))}
           <LayerControl value={layer} onChange={setLayer} opacity={opacity} onOpacity={setOpacity} />
           <p className={s.note}>Data from model run <b>{data?.meta.modelRunId ?? "…"}</b>: 500 m analysis sample points and 3 km local windows. This is data-derived terrain similarity, not mission-site approval.</p>
-          <p className={s.srcnote}>Sources: {data ? data.attribution.join(" · ") : "NASA PDS Geosciences Node · NASA LP DAAC"}</p>
+          <p className={s.srcnote}>Sources: {data?.attribution?.join(" · ") ?? "NASA PDS Geosciences Node · NASA LP DAAC"}</p>
         </aside>
 
         <main className={s.mapwrap}>
