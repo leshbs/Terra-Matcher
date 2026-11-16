@@ -6,6 +6,8 @@ import {
   getComparisonViewFromDataset,
 } from "@/components/comparison/data";
 
+export const instant = false;
+
 type ComparisonPageProps = {
   params: Promise<{
     scenarioId: string;

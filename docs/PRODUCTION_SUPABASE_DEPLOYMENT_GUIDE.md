@@ -139,7 +139,7 @@ NEXT_PUBLIC_APP_URL=https://<production-domain>
 
 Aturan penting:
 
-- Jangan gunakan `fixture` di Production.
+- Jangan gunakan `fixture` di Production. Aplikasi menolak nilai `fixture`, kosong, atau tidak dikenal di luar `development`/`test`; tidak ada fallback diam-diam ke fixture.
 - `COMPARISON_API_ORIGIN` harus URL publik HTTPS tanpa trailing slash.
 - `SUPABASE_SERVICE_ROLE_KEY` tidak boleh diberi prefix `NEXT_PUBLIC_`.
 - URL dan anon key boleh berada di browser; service-role key tidak boleh.
@@ -159,6 +159,15 @@ npm run test:e2e -- tests/e2e/main-web-flow.spec.ts
 ```
 
 E2E lokal menggunakan mode fixture secara sengaja agar tidak memerlukan secret. E2E tersebut memverifikasi navigasi canonical, bukan kebenaran data Supabase produksi.
+
+Selain itu, jalankan build dengan konfigurasi production-like berikut sebelum deploy. Ini memastikan halaman tidak dapat kembali ke fixture saat variabel environment tidak lengkap:
+
+```powershell
+$env:COMPARISON_DATA_SOURCE = 'api'
+$env:EXPLORER_DATA_SOURCE = 'api'
+$env:COMPARISON_API_ORIGIN = 'https://<production-domain>'
+npm run build
+```
 
 ## 8. Deploy dan smoke test API mode
 
