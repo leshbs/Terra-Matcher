@@ -1,9 +1,10 @@
 import type { ExploreData } from "./types";
-import { buildCells } from "./geo";
-import { LAYERS } from "./layers";
 import { resolveDataSourceMode } from "@/lib/source-mode";
 
 const FIXTURE_URL = "/data/demo/explore-fixture.json";
+const FIXTURE_MANIFEST_URL = "/layers/manifest.json";
+const FIXTURE_CELLS_URL = "/layers/terrain-cells.geojson";
+const FIXTURE_CANDIDATES_URL = "/layers/candidates.geojson";
 const DEFAULT_SCENARIO_ID = "mars-gale-aeolis-palus-v1";
 
 export type ExploreSourceMode = "api" | "fixture";
@@ -34,7 +35,47 @@ function hasCanonicalGrid(data: Partial<ExploreData>): data is ExploreData {
   );
 }
 
-function parseExplorePayload(payload: unknown, mode: ExploreSourceMode): ExploreData {
+function gridRangesFromCells(cells: ExploreData["cells"]): ExploreData["gridRanges"] {
+  const range = (key: "slope" | "rough" | "relief"): [number, number] => {
+    const values = cells.features.map((cell) => Number(cell.properties?.[key]));
+    return [Math.min(...values), Math.max(...values)];
+  };
+  return { slope: range("slope"), rough: range("rough"), relief: range("relief") };
+}
+
+async function loadFixturePayload(payload: { data: unknown; meta: unknown }): Promise<ExploreData> {
+  const [manifestResponse, cellsResponse, candidatesResponse] = await Promise.all([
+    fetch(FIXTURE_MANIFEST_URL, { cache: "no-store" }),
+    fetch(FIXTURE_CELLS_URL, { cache: "no-store" }),
+    fetch(FIXTURE_CANDIDATES_URL, { cache: "no-store" }),
+  ]);
+  if (![manifestResponse, cellsResponse, candidatesResponse].every((response) => response.ok)) {
+    throw new Error("Explorer fixture layers could not be loaded.");
+  }
+  const [manifest, cells, candidates] = await Promise.all([
+    manifestResponse.json() as Promise<{ modelRunId: string; attribution: string[] }>,
+    cellsResponse.json() as Promise<ExploreData["cells"]>,
+    candidatesResponse.json() as Promise<{ features: Array<{ geometry?: { type?: string; coordinates?: unknown }; properties?: Record<string, unknown> }> }>,
+  ]);
+  const source = payload.data as { datasets: ExploreData["datasets"]; windows: Array<Omit<ExploreData["windows"][number], "center" | "points">> };
+  const windows = source.windows.map((window) => {
+    const marker = candidates.features.find((feature) => feature.properties?.id === window.id);
+    if (marker?.geometry?.type !== "Point" || !Array.isArray(marker.geometry.coordinates)) {
+      throw new Error(`Explorer fixture marker is missing for ${window.id}.`);
+    }
+    const points = cells.features.filter((cell) => cell.properties?.wid === window.id).map((cell) => ({
+      e: Number(cell.properties?.e), n: Number(cell.properties?.n), slope: Number(cell.properties?.slope),
+      rough: Number(cell.properties?.rough), relief: Number(cell.properties?.relief),
+    }));
+    return { ...window, center: marker.geometry.coordinates as [number, number], points };
+  });
+  return {
+    datasets: source.datasets, windows, cells, gridRanges: gridRangesFromCells(cells),
+    attribution: manifest.attribution, meta: { modelRunId: manifest.modelRunId },
+  };
+}
+
+async function parseExplorePayload(payload: unknown, mode: ExploreSourceMode): Promise<ExploreData> {
   if (payload !== null && typeof payload === "object" && "data" in payload && "meta" in payload) {
     const { data, meta } = payload as { data: unknown; meta: unknown };
     if (
@@ -49,17 +90,7 @@ function parseExplorePayload(payload: unknown, mode: ExploreSourceMode): Explore
       }
 
       if (mode === "fixture") {
-        const windows = explorerData.windows ?? [];
-        return {
-          ...(data as Omit<ExploreData, "meta" | "cells" | "gridRanges">),
-          cells: buildCells(windows) as ExploreData["cells"],
-          gridRanges: {
-            slope: LAYERS.slope.range,
-            rough: LAYERS.rough.range,
-            relief: LAYERS.relief.range,
-          },
-          meta: meta as ExploreData["meta"],
-        };
+        return loadFixturePayload({ data, meta });
       }
     }
   }

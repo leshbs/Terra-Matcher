@@ -108,6 +108,18 @@ class RunRankingsTests(unittest.TestCase):
             self.assertTrue(all(feature["properties"]["modelRunId"] for feature in geojson["features"]))
             self.assertTrue(all(feature["properties"]["rank"] >= 1 for feature in candidate_features))
             self.assertNotIn("rank", reference_features[0]["properties"])
+            explorer_grid = json.loads((output_root / "explorer-grid-samples.json").read_text(encoding="utf-8"))
+            self.assertEqual(explorer_grid["modelRunId"], "2026-11-14-mvp-v1")
+            self.assertEqual(len(explorer_grid["samples"]), 150)
+            first_sample = explorer_grid["samples"][0]
+            self.assertEqual(
+                set(first_sample),
+                {
+                    "id", "windowId", "modelRunId", "datasetId", "offsetEastKm", "offsetNorthKm",
+                    "slope", "roughness", "relativeRelief", "qualityFlag",
+                },
+            )
+            self.assertEqual(first_sample["qualityFlag"], "source-backed-derived")
 
 
 if __name__ == "__main__":

@@ -33,8 +33,9 @@ test("Explorer loader reports request and response failures with useful context"
   assert.match(loaderSource, /Explorer API response does not match the UI data contract/);
 });
 
-test("Explorer loader requires canonical cells from the API and only derives legacy fixture cells", () => {
+test("Explorer loader requires canonical cells from the API and loads explicit fixture layers", () => {
   assert.match(loaderSource, /hasCanonicalGrid\(explorerData\)/);
   assert.match(loaderSource, /if \(mode === "fixture"\)/);
-  assert.match(loaderSource, /cells: buildCells\(windows\)/);
+  assert.match(loaderSource, /FIXTURE_CELLS_URL/);
+  assert.match(loaderSource, /loadFixturePayload/);
 });
