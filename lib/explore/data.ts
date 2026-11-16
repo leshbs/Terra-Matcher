@@ -1,6 +1,7 @@
 import type { ExploreData } from "./types";
 import { buildCells } from "./geo";
 import { LAYERS } from "./layers";
+import { resolveDataSourceMode } from "@/lib/source-mode";
 
 const FIXTURE_URL = "/data/demo/explore-fixture.json";
 const DEFAULT_SCENARIO_ID = "mars-gale-aeolis-palus-v1";
@@ -8,12 +9,11 @@ const DEFAULT_SCENARIO_ID = "mars-gale-aeolis-palus-v1";
 export type ExploreSourceMode = "api" | "fixture";
 
 export function resolveExploreSourceMode(): ExploreSourceMode {
-  const raw = process.env.EXPLORER_DATA_SOURCE?.trim().toLowerCase();
-  if (raw === "api" || raw === "fixture") return raw;
-
-  throw new Error(
-    "Unsupported EXPLORER_DATA_SOURCE. Set it to 'api' for the backend dataset or 'fixture' for the local demo.",
-  );
+  return resolveDataSourceMode({
+    value: process.env.EXPLORER_DATA_SOURCE,
+    environment: process.env.NODE_ENV,
+    variableName: "EXPLORER_DATA_SOURCE",
+  });
 }
 
 export function resolveExploreApiUrl(scenarioId: string): string {

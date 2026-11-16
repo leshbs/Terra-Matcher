@@ -16,9 +16,14 @@ test("Explorer loader exposes an explicit api mode for the scenario endpoint", (
 });
 
 test("Explorer loader does not silently fall back to the demo fixture", () => {
-  assert.match(loaderSource, /raw === "fixture"/);
-  assert.match(loaderSource, /Unsupported EXPLORER_DATA_SOURCE/);
+  assert.match(loaderSource, /resolveDataSourceMode/);
   assert.doesNotMatch(loaderSource, /catch[\s\S]{0,300}loadFixture/);
+});
+
+test("Explorer source mode delegates to the fail-closed shared resolver", () => {
+  assert.match(loaderSource, /@\/lib\/source-mode/);
+  assert.match(loaderSource, /resolveDataSourceMode\(/);
+  assert.doesNotMatch(loaderSource, /raw === "api" \|\| raw === "fixture"/);
 });
 
 test("Explorer loader reports request and response failures with useful context", () => {

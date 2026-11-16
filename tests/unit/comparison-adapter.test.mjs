@@ -52,6 +52,13 @@ test("adapter exposes fixture and api source switcher knobs", () => {
   assert.match(dataSource, /getRankedCandidatesFromDataset/);
 });
 
+test("comparison source mode delegates to the fail-closed shared resolver", () => {
+  assert.match(adapterSource, /@\/lib\/source-mode/);
+  assert.match(adapterSource, /resolveDataSourceMode\(/);
+  assert.doesNotMatch(adapterSource, /return raw === "api" \? "api" : "fixture"/);
+  assert.doesNotMatch(adapterSource, /API mode falls back to the local fixture/);
+});
+
 test("API payload parser accepts bare dataset and { data, meta } envelope", () => {
   const bare = parseComparisonApiPayload(fixture);
   assert.equal(bare.scenario.id, fixture.scenario.id);
