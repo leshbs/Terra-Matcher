@@ -1,7 +1,9 @@
 import "server-only";
 
 import { cache } from "react";
+import { headers } from "next/headers";
 import fixtureJson from "@/data/fixtures/comparison-demo.json";
+import { buildInternalApiHeaders } from "@/lib/internal-api-auth";
 import { resolveDataSourceMode } from "@/lib/source-mode";
 import {
   comparisonDatasetSchema,
@@ -122,12 +124,13 @@ export function resolveComparisonApiUrl(scenarioId?: string): string {
   return "/api/compare";
 }
 
-function resolveFetchUrl(pathOrUrl: string): string {
+function resolveFetchUrl(pathOrUrl: string, requestOrigin?: string): string {
   if (/^https?:\/\//i.test(pathOrUrl)) {
     return pathOrUrl;
   }
 
   const origin =
+    requestOrigin ||
     process.env.COMPARISON_API_ORIGIN?.trim() ||
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     process.env.VERCEL_URL?.trim();
@@ -146,15 +149,31 @@ function resolveFetchUrl(pathOrUrl: string): string {
   return new URL(pathOrUrl, normalizedOrigin).toString();
 }
 
+function getRequestOrigin(incomingHeaders: Headers): string | undefined {
+  const host = incomingHeaders.get("host");
+  if (!host) return undefined;
+
+  const protocol = incomingHeaders.get("x-forwarded-proto")?.split(",")[0] || "https";
+  return `${protocol}://${host}`;
+}
+
 async function loadApiDataset(scenarioId?: string): Promise<ComparisonDataset> {
   const pathOrUrl = resolveComparisonApiUrl(scenarioId);
-  const url = resolveFetchUrl(pathOrUrl);
+  const incomingHeaders = await headers();
+  const requestOrigin = getRequestOrigin(incomingHeaders);
+  const url = resolveFetchUrl(pathOrUrl, requestOrigin);
+  const requestHeaders = buildInternalApiHeaders({
+    cookie: incomingHeaders.get("cookie"),
+    bypassSecret: process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+    requestOrigin,
+    destinationUrl: url,
+  });
 
   let response: Response;
   try {
     response = await fetch(url, {
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: requestHeaders,
     });
   } catch (error) {
     throw createFailure(
